@@ -99,7 +99,10 @@ class MemoryStore {
   private dbPath: string;
 
   constructor() {
-    this.dbPath = path.join(process.cwd(), "data", "local-db.json");
+    const isVercel = !!process.env.VERCEL;
+    this.dbPath = isVercel
+      ? path.join("/tmp", "local-db.json")
+      : path.join(process.cwd(), "data", "local-db.json");
     this.initDefaultSeed();
     this.loadFromDisk();
     // Pastikan akun default admin selalu tersedia jika belum ada di data tersimpan
