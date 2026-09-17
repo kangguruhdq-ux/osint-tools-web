@@ -129,6 +129,8 @@ export async function POST(req: NextRequest) {
       createdAt: new Date(),
     });
 
+    memoryDb.save();
+
     return NextResponse.json({
       success: true,
       message,

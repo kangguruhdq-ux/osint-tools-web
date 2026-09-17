@@ -88,27 +88,112 @@ export interface MockProvider {
 }
 
 class MemoryStore {
-  users: Map<string, MockUser> = new Map();
-  investigations: Map<string, MockInvestigation> = new Map();
-  scanResults: MockScanResult[] = [];
-  providers: Map<string, MockProvider> = new Map();
-  auditLogs: any[] = [];
-  keywordMonitors: any[] = [];
-  reports: any[] = [];
+  private _users: Map<string, MockUser> = new Map();
+  private _investigations: Map<string, MockInvestigation> = new Map();
+  private _scanResults: MockScanResult[] = [];
+  private _providers: Map<string, MockProvider> = new Map();
+  private _auditLogs: any[] = [];
+  private _keywordMonitors: any[] = [];
+  private _reports: any[] = [];
 
   private dbPath: string;
+  private lastMtime: number = 0;
 
   constructor() {
     const isVercel = !!process.env.VERCEL;
     this.dbPath = isVercel
       ? path.join("/tmp", "local-db.json")
       : path.join(process.cwd(), "data", "local-db.json");
-    this.initDefaultSeed();
-    this.loadFromDisk();
-    // Pastikan akun default admin selalu tersedia jika belum ada di data tersimpan
-    if (!this.users.has("admin@nexus-osint.io")) {
+
+    // Ensure data directory exists
+    try {
+      const dir = path.dirname(this.dbPath);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+    } catch {}
+
+    // Load from disk if snapshot file exists, otherwise seed initial data and save
+    if (fs.existsSync(this.dbPath)) {
+      this.loadFromDisk();
+    } else {
       this.initDefaultSeed();
+      this.saveToDisk();
     }
+
+    // Safety fallback: ensure default admin exists if user list is empty
+    if (!this._users.has("admin@nexus-osint.io") && this._users.size === 0) {
+      this.initDefaultSeed();
+      this.saveToDisk();
+    }
+  }
+
+  private syncFromDisk() {
+    try {
+      if (!fs.existsSync(this.dbPath)) return;
+      const stat = fs.statSync(this.dbPath);
+      if (stat.mtimeMs > this.lastMtime) {
+        this.loadFromDisk();
+      }
+    } catch {
+      // ignore concurrent read error
+    }
+  }
+
+  get users(): Map<string, MockUser> {
+    this.syncFromDisk();
+    return this._users;
+  }
+  set users(val: Map<string, MockUser>) {
+    this._users = val;
+  }
+
+  get investigations(): Map<string, MockInvestigation> {
+    this.syncFromDisk();
+    return this._investigations;
+  }
+  set investigations(val: Map<string, MockInvestigation>) {
+    this._investigations = val;
+  }
+
+  get scanResults(): MockScanResult[] {
+    this.syncFromDisk();
+    return this._scanResults;
+  }
+  set scanResults(val: MockScanResult[]) {
+    this._scanResults = val;
+  }
+
+  get providers(): Map<string, MockProvider> {
+    this.syncFromDisk();
+    return this._providers;
+  }
+  set providers(val: Map<string, MockProvider>) {
+    this._providers = val;
+  }
+
+  get auditLogs(): any[] {
+    this.syncFromDisk();
+    return this._auditLogs;
+  }
+  set auditLogs(val: any[]) {
+    this._auditLogs = val;
+  }
+
+  get keywordMonitors(): any[] {
+    this.syncFromDisk();
+    return this._keywordMonitors;
+  }
+  set keywordMonitors(val: any[]) {
+    this._keywordMonitors = val;
+  }
+
+  get reports(): any[] {
+    this.syncFromDisk();
+    return this._reports;
+  }
+  set reports(val: any[]) {
+    this._reports = val;
   }
 
   loadFromDisk() {
@@ -118,12 +203,12 @@ class MemoryStore {
         const parsed = JSON.parse(raw);
         if (parsed.users && Array.isArray(parsed.users)) {
           for (const [k, v] of parsed.users) {
-            this.users.set(k, { ...v, createdAt: new Date(v.createdAt) });
+            this._users.set(k, { ...v, createdAt: new Date(v.createdAt) });
           }
         }
         if (parsed.investigations && Array.isArray(parsed.investigations)) {
           for (const [k, v] of parsed.investigations) {
-            this.investigations.set(k, {
+            this._investigations.set(k, {
               ...v,
               createdAt: new Date(v.createdAt),
               updatedAt: new Date(v.updatedAt),
@@ -131,34 +216,38 @@ class MemoryStore {
           }
         }
         if (parsed.scanResults && Array.isArray(parsed.scanResults)) {
-          this.scanResults = parsed.scanResults.map((s: any) => ({
+          this._scanResults = parsed.scanResults.map((s: any) => ({
             ...s,
             createdAt: new Date(s.createdAt),
           }));
         }
         if (parsed.providers && Array.isArray(parsed.providers)) {
           for (const [k, v] of parsed.providers) {
-            this.providers.set(k, v);
+            this._providers.set(k, v);
           }
         }
         if (parsed.auditLogs && Array.isArray(parsed.auditLogs)) {
-          this.auditLogs = parsed.auditLogs.map((a: any) => ({
+          this._auditLogs = parsed.auditLogs.map((a: any) => ({
             ...a,
             createdAt: new Date(a.createdAt),
           }));
         }
         if (parsed.keywordMonitors && Array.isArray(parsed.keywordMonitors)) {
-          this.keywordMonitors = parsed.keywordMonitors.map((m: any) => ({
+          this._keywordMonitors = parsed.keywordMonitors.map((m: any) => ({
             ...m,
             createdAt: new Date(m.createdAt),
           }));
         }
         if (parsed.reports && Array.isArray(parsed.reports)) {
-          this.reports = parsed.reports.map((r: any) => ({
+          this._reports = parsed.reports.map((r: any) => ({
             ...r,
             generatedAt: new Date(r.generatedAt),
           }));
         }
+        try {
+          const stat = fs.statSync(this.dbPath);
+          this.lastMtime = stat.mtimeMs;
+        } catch {}
       }
     } catch (err) {
       console.warn("[LocalDB] Gagal memuat snapshot database dari disk:", err);
@@ -171,24 +260,106 @@ class MemoryStore {
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
       }
+
+      // Merge concurrent changes from disk if updated externally
+      if (fs.existsSync(this.dbPath)) {
+        try {
+          const stat = fs.statSync(this.dbPath);
+          if (stat.mtimeMs > this.lastMtime) {
+            const raw = fs.readFileSync(this.dbPath, "utf-8");
+            const diskParsed = JSON.parse(raw);
+            this.mergeDiskData(diskParsed);
+          }
+        } catch {}
+      }
+
       const data = {
-        users: Array.from(this.users.entries()),
-        investigations: Array.from(this.investigations.entries()),
-        scanResults: this.scanResults.slice(0, 500),
-        providers: Array.from(this.providers.entries()),
-        auditLogs: this.auditLogs.slice(0, 1000),
-        keywordMonitors: this.keywordMonitors,
-        reports: this.reports,
+        users: Array.from(this._users.entries()),
+        investigations: Array.from(this._investigations.entries()),
+        scanResults: this._scanResults.slice(0, 500),
+        providers: Array.from(this._providers.entries()),
+        auditLogs: this._auditLogs.slice(0, 1000),
+        keywordMonitors: this._keywordMonitors,
+        reports: this._reports,
       };
-      fs.writeFileSync(this.dbPath, JSON.stringify(data, null, 2), "utf-8");
+
+      const payload = JSON.stringify(data, null, 2);
+      fs.writeFileSync(this.dbPath, payload, "utf-8");
+
+      try {
+        const stat = fs.statSync(this.dbPath);
+        this.lastMtime = stat.mtimeMs;
+      } catch {}
     } catch (err) {
       console.warn("[LocalDB] Gagal menyimpan snapshot database ke disk:", err);
+    }
+  }
+
+  private mergeDiskData(diskParsed: any) {
+    if (diskParsed.users && Array.isArray(diskParsed.users)) {
+      for (const [k, v] of diskParsed.users) {
+        if (!this._users.has(k)) {
+          this._users.set(k, { ...v, createdAt: new Date(v.createdAt) });
+        }
+      }
+    }
+    if (diskParsed.investigations && Array.isArray(diskParsed.investigations)) {
+      for (const [k, v] of diskParsed.investigations) {
+        if (!this._investigations.has(k)) {
+          this._investigations.set(k, {
+            ...v,
+            createdAt: new Date(v.createdAt),
+            updatedAt: new Date(v.updatedAt),
+          });
+        }
+      }
+    }
+    if (diskParsed.scanResults && Array.isArray(diskParsed.scanResults)) {
+      const knownIds = new Set(this._scanResults.map((s) => s.id));
+      for (const s of diskParsed.scanResults) {
+        if (!knownIds.has(s.id)) {
+          this._scanResults.push({ ...s, createdAt: new Date(s.createdAt) });
+          knownIds.add(s.id);
+        }
+      }
+      this._scanResults.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    }
+    if (diskParsed.auditLogs && Array.isArray(diskParsed.auditLogs)) {
+      const knownIds = new Set(this._auditLogs.map((a) => a.id));
+      for (const a of diskParsed.auditLogs) {
+        if (!knownIds.has(a.id)) {
+          this._auditLogs.push({ ...a, createdAt: new Date(a.createdAt) });
+          knownIds.add(a.id);
+        }
+      }
+      this._auditLogs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    }
+    if (diskParsed.reports && Array.isArray(diskParsed.reports)) {
+      const knownIds = new Set(this._reports.map((r) => r.reportId || r.id));
+      for (const r of diskParsed.reports) {
+        const rId = r.reportId || r.id;
+        if (!knownIds.has(rId)) {
+          this._reports.push({ ...r, generatedAt: new Date(r.generatedAt) });
+          knownIds.add(rId);
+        }
+      }
+      this._reports.sort((a, b) => new Date(b.generatedAt).getTime() - new Date(a.generatedAt).getTime());
+    }
+    if (diskParsed.keywordMonitors && Array.isArray(diskParsed.keywordMonitors)) {
+      const knownIds = new Set(this._keywordMonitors.map((m) => m.id));
+      for (const m of diskParsed.keywordMonitors) {
+        if (!knownIds.has(m.id)) {
+          this._keywordMonitors.push({ ...m, createdAt: new Date(m.createdAt) });
+          knownIds.add(m.id);
+        }
+      }
     }
   }
 
   save() {
     this.saveToDisk();
   }
+
 
   private initDefaultSeed() {
     // Admin user: admin@nexus-osint.io / Admin123!

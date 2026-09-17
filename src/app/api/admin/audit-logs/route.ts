@@ -11,6 +11,7 @@ export async function GET() {
 export async function DELETE(req: NextRequest) {
   try {
     memoryDb.auditLogs = [];
+    memoryDb.save();
     return NextResponse.json({
       success: true,
       message: "Seluruh riwayat audit log keamanan berhasil dibersihkan.",

@@ -41,12 +41,15 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // 2. Authentication guard for Admin & Workspace routes
+  // 2. Authentication guard & Auto-Redirect for already logged-in users
   const token = request.cookies.get("nexus_session")?.value;
-  const isAuthRoute =
-    request.nextUrl.pathname.startsWith("/dashboard") ||
-    request.nextUrl.pathname.startsWith("/workspace") ||
-    request.nextUrl.pathname.startsWith("/admin");
+  const isAuthPage =
+    request.nextUrl.pathname === "/login" ||
+    request.nextUrl.pathname === "/register";
+
+  if (token && isAuthPage) {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
 
   // Allow navigation but check token if present
   const response = NextResponse.next();

@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
+import { PageTransition } from "@/components/layout/page-transition";
+import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -90,9 +92,14 @@ export function AppLayout({
           }}
         />
 
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-slate-950">
-          <div className="mx-auto max-w-7xl">{children}</div>
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-24 sm:pb-8 bg-slate-950">
+          <div className="mx-auto max-w-7xl">
+            <PageTransition>{children}</PageTransition>
+          </div>
         </main>
+
+        {/* Floating Mobile Android Bottom Dock */}
+        <MobileBottomNav />
       </div>
     </div>
   );

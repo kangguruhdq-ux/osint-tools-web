@@ -7,6 +7,7 @@ import { memoryDb, prisma, safeDbQuery } from "@/lib/db";
 const LoginSchema = z.object({
   email: z.string().email("Format email tidak valid."),
   password: z.string().min(6, "Password minimal 6 karakter."),
+  rememberMe: z.boolean().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -21,7 +22,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { email, password } = parsed.data;
+    const { email, password, rememberMe } = parsed.data;
 
     let user: any = memoryDb.users.get(email);
     if (!user) {
@@ -35,11 +36,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const isDemoMatch =
-      (email.toLowerCase() === "admin@nexus-osint.io" && password === "Admin123!") ||
-      (email.toLowerCase() === "analyst@nexus-osint.io" && password === "Analyst123!");
-
-    const isValid = isDemoMatch || (await comparePassword(password, user.passwordHash));
+    const isValid = await comparePassword(password, user.passwordHash);
     if (!isValid) {
       return NextResponse.json(
         { success: false, error: "Email atau password salah." },
@@ -61,12 +58,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const token = signToken({
-      userId: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role as any,
-    });
+    const expiryStr = rememberMe ? "365d" : "7d";
+    const maxAgeSeconds = rememberMe ? 60 * 60 * 24 * 365 : 60 * 60 * 24 * 7;
+
+    const token = signToken(
+      {
+        userId: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role as any,
+      },
+      expiryStr
+    );
 
     const response = NextResponse.json({
       success: true,
@@ -80,12 +83,12 @@ export async function POST(req: NextRequest) {
       token,
     });
 
-    // Set secure HTTP-only cookie
+    // Set secure HTTP-only cookie with rememberMe duration
     response.cookies.set(SESSION_COOKIE_NAME, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      maxAge: maxAgeSeconds,
       path: "/",
     });
 
@@ -99,7 +102,11 @@ export async function POST(req: NextRequest) {
       createdAt: new Date(),
     });
 
+    // Persist login audit to disk
+    memoryDb.save();
+
     return response;
+
   } catch (error: any) {
     return NextResponse.json(
       { success: false, error: "Terjadi kesalahan pada server: " + error.message },

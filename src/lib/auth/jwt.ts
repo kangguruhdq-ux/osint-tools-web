@@ -11,8 +11,8 @@ export interface TokenPayload {
   name: string;
 }
 
-export function signToken(payload: TokenPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: TOKEN_EXPIRY });
+export function signToken(payload: TokenPayload, expiresIn: string | number = "7d"): string {
+  return jwt.sign(payload, JWT_SECRET, { expiresIn } as any);
 }
 
 export function verifyToken(token: string): TokenPayload | null {
@@ -30,5 +30,14 @@ export async function hashPassword(password: string): Promise<string> {
 }
 
 export async function comparePassword(password: string, hash: string): Promise<boolean> {
-  return bcrypt.compare(password, hash);
+  try {
+    if (!hash) return false;
+    // Support legacy plain text fallback and handle gracefully
+    if (!hash.startsWith("$2a$") && !hash.startsWith("$2b$") && !hash.startsWith("$2y$")) {
+      return password === hash;
+    }
+    return await bcrypt.compare(password, hash);
+  } catch {
+    return false;
+  }
 }

@@ -78,6 +78,8 @@ export async function POST(req: NextRequest) {
       createdAt: new Date(),
     });
 
+    memoryDb.save();
+
     return NextResponse.json({
       success: true,
       message: `API Key untuk provider '${provider.name}' berhasil disimpan secara terenkripsi (AES-256-GCM).`,

@@ -28,12 +28,40 @@ body {
   color: var(--foreground);
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Smooth Android momentum scrolling */
+* {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Android & Mobile Tactile Tap Effects */
+button:active, a:active {
+  transition: transform 0.12s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.android-ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.android-ripple:active::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(6, 182, 212, 0.15);
+  border-radius: inherit;
+  pointer-events: none;
 }
 
 /* Custom modern enterprise dark scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
   background: #080c14;
@@ -45,6 +73,7 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #334155;
 }
+
 
 /* Glassmorphism helpers */
 .glass-panel {

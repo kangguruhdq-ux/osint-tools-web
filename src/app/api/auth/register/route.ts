@@ -100,6 +100,8 @@ export async function POST(req: NextRequest) {
       createdAt: new Date(),
     });
 
+    memoryDb.save();
+
     return response;
   } catch (error: any) {
     return NextResponse.json(

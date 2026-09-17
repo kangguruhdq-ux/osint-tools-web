@@ -38,6 +38,7 @@ export function AuthCard({ initialMode = "login" }: AuthCardProps) {
   // Login states
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
 
   // Register states
   const [regName, setRegName] = useState("");
@@ -48,6 +49,27 @@ export function AuthCard({ initialMode = "login" }: AuthCardProps) {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
+  // Check if session is already active or if email was remembered
+  React.useEffect(() => {
+    try {
+      const savedEmail = localStorage.getItem("nexus_remember_email");
+      if (savedEmail) {
+        setLoginEmail(savedEmail);
+        setRememberMe(true);
+      }
+    } catch {}
+
+    // If user is already logged in, redirect directly to dashboard
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.user) {
+          router.replace("/dashboard");
+        }
+      })
+      .catch(() => {});
+  }, [router]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage("");
@@ -57,7 +79,11 @@ export function AuthCard({ initialMode = "login" }: AuthCardProps) {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: loginEmail, password: loginPassword }),
+        body: JSON.stringify({
+          email: loginEmail,
+          password: loginPassword,
+          rememberMe,
+        }),
       });
 
       const data = await res.json();
@@ -67,6 +93,16 @@ export function AuthCard({ initialMode = "login" }: AuthCardProps) {
         toastError(data.error || "Autentikasi gagal.");
         setLoading(false);
         return;
+      }
+
+      if (rememberMe) {
+        try {
+          localStorage.setItem("nexus_remember_email", loginEmail);
+        } catch {}
+      } else {
+        try {
+          localStorage.removeItem("nexus_remember_email");
+        } catch {}
       }
 
       if (data.user) {
@@ -300,6 +336,22 @@ export function AuthCard({ initialMode = "login" }: AuthCardProps) {
                             </button>
                           }
                         />
+                      </div>
+
+                      {/* Remember Me Checkbox */}
+                      <div className="flex items-center justify-between pt-0.5">
+                        <label className="flex items-center gap-2 cursor-pointer select-none group">
+                          <input
+                            type="checkbox"
+                            id="rememberMe"
+                            checked={rememberMe}
+                            onChange={(e) => setRememberMe(e.target.checked)}
+                            className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-cyan-500 focus:ring-cyan-500/30 focus:ring-offset-0 focus:outline-none accent-cyan-500 cursor-pointer"
+                          />
+                          <span className="text-xs text-slate-300 group-hover:text-white transition-colors">
+                            Ingat saya di perangkat ini
+                          </span>
+                        </label>
                       </div>
 
                       <Button

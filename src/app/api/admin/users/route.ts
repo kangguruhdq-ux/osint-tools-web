@@ -71,6 +71,8 @@ export async function POST(req: NextRequest) {
       createdAt: new Date(),
     });
 
+    memoryDb.save();
+
     return NextResponse.json({
       success: true,
       message: "Pengguna baru berhasil ditambahkan.",
@@ -132,6 +134,8 @@ export async function PATCH(req: NextRequest) {
       details: { role: targetUser.role, name: targetUser.name, status: targetUser.status },
       createdAt: new Date(),
     });
+
+    memoryDb.save();
 
     return NextResponse.json({
       success: true,
@@ -201,6 +205,8 @@ export async function DELETE(req: NextRequest) {
       details: { deletedEmail: foundEmail },
       createdAt: new Date(),
     });
+
+    memoryDb.save();
 
     return NextResponse.json({
       success: true,
