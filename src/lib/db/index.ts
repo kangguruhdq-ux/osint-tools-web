@@ -26,12 +26,16 @@ export async function safeDbQuery<T>(fn: (client: PrismaClient) => Promise<T>): 
   try {
     const result = await Promise.race([
       fn(prisma),
-      new Promise<null>((_, reject) => setTimeout(() => reject(new Error("DB_TIMEOUT")), 300)),
+      new Promise<null>((_, reject) => setTimeout(() => reject(new Error("DB_TIMEOUT")), 3500)),
     ]);
     isPrismaOnline = true;
     return result as T;
   } catch {
     isPrismaOnline = false;
+    // Reset after 10 seconds to retry cloud database connection
+    setTimeout(() => {
+      isPrismaOnline = null;
+    }, 10000);
     return null;
   }
 }
