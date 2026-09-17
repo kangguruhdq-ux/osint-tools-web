@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local persistent database
+data/*.json
+!data/.gitkeep
+
+# temporary scratch scripts
+scratch/
+
+

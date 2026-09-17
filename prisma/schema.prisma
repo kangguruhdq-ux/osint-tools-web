@@ -1,0 +1,392 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  USER
+  ANALYST
+  ADMIN
+  SUPERADMIN
+}
+
+enum SubscriptionTier {
+  FREE
+  PRO
+  TEAM
+  ENTERPRISE
+}
+
+enum JobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum ProviderStatus {
+  ACTIVE
+  CONFIGURATION_REQUIRED
+  ERROR
+  DISABLED
+}
+
+enum PriorityLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model User {
+  id               String          @id @default(uuid())
+  email            String          @unique
+  passwordHash     String
+  name             String
+  role             Role            @default(USER)
+  emailVerified    DateTime?
+  avatarUrl        String?
+  isActive         Boolean         @default(true)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  deletedAt        DateTime?
+
+  sessions         Session[]
+  subscriptions    Subscription[]
+  usageQuotas      UsageQuota[]
+  investigations   Investigation[]
+  scanJobs         ScanJob[]
+  downloadJobs     DownloadJob[]
+  reports          Report[]
+  monitors         KeywordMonitor[]
+  notifications    Notification[]
+  auditLogs        AuditLog[]
+
+  @@index([email])
+  @@index([role])
+}
+
+model Session {
+  id           String    @id @default(uuid())
+  userId       String
+  token        String    @unique
+  userAgent    String?
+  ipAddress    String?
+  expiresAt    DateTime
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+}
+
+model Subscription {
+  id               String           @id @default(uuid())
+  userId           String
+  tier             SubscriptionTier @default(FREE)
+  status           String           @default("ACTIVE")
+  currentPeriodEnd DateTime
+  cancelAtPeriodEnd Boolean         @default(false)
+  paymentProvider  String?
+  paymentSubId     String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model UsageQuota {
+  id               String    @id @default(uuid())
+  userId           String
+  periodYear       Int
+  periodMonth      Int
+  scanCount        Int       @default(0)
+  scanLimit        Int       @default(100)
+  downloadBytes    BigInt    @default(0)
+  downloadLimit    BigInt    @default(1073741824) // 1GB in bytes
+  aiTokenCount     Int       @default(0)
+  aiTokenLimit     Int       @default(100000)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, periodYear, periodMonth])
+}
+
+model ApiProvider {
+  id               String          @id @default(uuid())
+  key              String          @unique // e.g. "rapidapi", "cobalt", "openai", "whois"
+  name             String
+  category         String          // "downloader", "ai", "osint", "security"
+  baseUrl          String?
+  status           ProviderStatus  @default(CONFIGURATION_REQUIRED)
+  priority         Int             @default(1)
+  rateLimitPerMin  Int             @default(60)
+  timeoutMs        Int             @default(15000)
+  lastCheckedAt    DateTime?
+  lastError        String?
+  configDocsUrl    String?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  credentials      ApiCredential[]
+
+  @@index([category])
+  @@index([status])
+}
+
+model ApiCredential {
+  id               String      @id @default(uuid())
+  providerId       String
+  encryptedApiKey  String      // AES-256-GCM encrypted
+  keyHint          String      // e.g. "sk-...4d2f"
+  iv               String
+  tag              String
+  isActive         Boolean     @default(true)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  provider         ApiProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@index([providerId])
+}
+
+model Investigation {
+  id               String          @id @default(uuid())
+  userId           String
+  title            String
+  description      String?
+  tags             String[]        @default([])
+  analystNotes     String?
+  priority         PriorityLevel   @default(MEDIUM)
+  status           String          @default("OPEN")
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  deletedAt        DateTime?
+
+  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scanResults      ScanResult[]
+  savedSearches    SavedSearch[]
+  timelineEvents   TimelineEvent[]
+  reports          Report[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+model SavedSearch {
+  id               String         @id @default(uuid())
+  investigationId  String
+  toolId           String
+  query            String
+  filters          Json?
+  notes            String?
+  createdAt        DateTime       @default(now())
+
+  investigation    Investigation  @relation(fields: [investigationId], references: [id], onDelete: Cascade)
+
+  @@index([investigationId])
+}
+
+model ScanJob {
+  id               String       @id @default(uuid())
+  userId           String
+  toolId           String       // e.g. "dns-lookup", "whois", "ip-lookup"
+  target           String
+  status           JobStatus    @default(PENDING)
+  progress         Int          @default(0) // 0 - 100
+  startedAt        DateTime?
+  completedAt      DateTime?
+  errorMessage     String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  results          ScanResult[]
+
+  @@index([userId])
+  @@index([toolId])
+  @@index([status])
+}
+
+model ScanResult {
+  id               String         @id @default(uuid())
+  scanJobId        String?
+  investigationId  String?
+  toolId           String
+  target           String
+  data             Json
+  summary          String?
+  confidenceScore  Float          @default(1.0)
+  sourceInfo       String?
+  createdAt        DateTime       @default(now())
+
+  scanJob          ScanJob?       @relation(fields: [scanJobId], references: [id], onDelete: SetNull)
+  investigation    Investigation? @relation(fields: [investigationId], references: [id], onDelete: SetNull)
+
+  @@index([toolId])
+  @@index([investigationId])
+}
+
+model DownloadJob {
+  id               String       @id @default(uuid())
+  userId           String
+  platform         String       // "tiktok", "youtube", "instagram", etc.
+  sourceUrl        String
+  title            String?
+  status           JobStatus    @default(PENDING)
+  progress         Int          @default(0)
+  fileSize         BigInt?
+  mimeType         String?
+  temporaryPath    String?
+  expiresAt        DateTime?
+  errorMessage     String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mediaFiles       MediaFile[]
+
+  @@index([userId])
+  @@index([platform])
+  @@index([status])
+}
+
+model MediaFile {
+  id               String       @id @default(uuid())
+  downloadJobId    String
+  fileName         String
+  fileSize         BigInt
+  mimeType         String
+  storageUrl       String
+  checksumSha256   String?
+  isWatermarked    Boolean      @default(false)
+  expiresAt        DateTime
+  createdAt        DateTime     @default(now())
+
+  downloadJob      DownloadJob  @relation(fields: [downloadJobId], references: [id], onDelete: Cascade)
+
+  @@index([downloadJobId])
+}
+
+model Report {
+  id               String         @id @default(uuid())
+  investigationId  String?
+  userId           String
+  title            String
+  format           String         @default("JSON") // "JSON", "CSV", "HTML"
+  summary          String?
+  content          Json
+  disclaimer       String
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  investigation    Investigation? @relation(fields: [investigationId], references: [id], onDelete: SetNull)
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([investigationId])
+}
+
+model TimelineEvent {
+  id               String        @id @default(uuid())
+  investigationId  String
+  title            String
+  description      String?
+  category         String        @default("FINDING")
+  eventTimestamp   DateTime
+  confidenceScore  Float         @default(1.0)
+  sourceUrl        String?
+  createdAt        DateTime      @default(now())
+
+  investigation    Investigation @relation(fields: [investigationId], references: [id], onDelete: Cascade)
+
+  @@index([investigationId])
+  @@index([eventTimestamp])
+}
+
+model KeywordMonitor {
+  id               String       @id @default(uuid())
+  userId           String
+  keyword          String
+  sources          String[]     @default(["rss", "news"])
+  intervalMinutes  Int          @default(60)
+  isActive         Boolean      @default(true)
+  lastRunAt        DateTime?
+  totalMatches     Int          @default(0)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isActive])
+}
+
+model Notification {
+  id               String       @id @default(uuid())
+  userId           String
+  title            String
+  message          String
+  type             String       @default("INFO")
+  isRead           Boolean      @default(false)
+  link             String?
+  createdAt        DateTime     @default(now())
+
+  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+}
+
+model AuditLog {
+  id               String       @id @default(uuid())
+  userId           String?
+  action           String       // e.g. "SCAN_DOMAIN", "DOWNLOAD_MEDIA", "API_KEY_UPDATE"
+  resourceType     String       // "TOOL", "INVESTIGATION", "ADMIN"
+  resourceId       String?
+  ipAddress        String?
+  userAgent        String?
+  status           String       @default("SUCCESS")
+  details          Json?
+  createdAt        DateTime     @default(now())
+
+  user             User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+model AllowedDomain {
+  id               String       @id @default(uuid())
+  domain           String       @unique
+  description      String?
+  createdAt        DateTime     @default(now())
+}
+
+model BlockedDomain {
+  id               String       @id @default(uuid())
+  domain           String       @unique
+  reason           String       @default("Malicious or private IP range")
+  createdAt        DateTime     @default(now())
+}
+
+model SystemSetting {
+  id               String       @id @default(uuid())
+  key              String       @unique
+  value            String
+  description      String?
+  isPublic         Boolean      @default(false)
+  updatedAt        DateTime     @updatedAt
+}
