@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import Parser from "rss-parser";
 import { validateUrlSafe } from "@/lib/security/ssrf-guard";
-import { memoryDb } from "@/lib/db";
+import { memoryDb, ensureDbSynced, persistMonitorToDb, deleteMonitorFromDb } from "@/lib/db";
 import { authenticateRequest } from "@/lib/auth/session";
 
 const MonitorSchema = z.object({
@@ -17,6 +17,7 @@ const parser = new Parser({
 });
 
 export async function GET(req: NextRequest) {
+  await ensureDbSynced();
   const user = await authenticateRequest(req);
   if (!user) {
     return NextResponse.json({
@@ -119,8 +120,7 @@ export async function POST(req: NextRequest) {
       createdAt: new Date(),
     };
 
-    memoryDb.keywordMonitors.unshift(newMonitor);
-    memoryDb.save();
+    await persistMonitorToDb(newMonitor);
 
     return NextResponse.json({
       success: true,
@@ -164,8 +164,7 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Akses ditolak." }, { status: 403 });
     }
 
-    memoryDb.keywordMonitors = memoryDb.keywordMonitors.filter((m) => m.id !== id);
-    memoryDb.save();
+    await deleteMonitorFromDb(id);
 
     return NextResponse.json({
       success: true,

@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { authenticateRequest } from "@/lib/auth/session";
-import { memoryDb, prisma } from "@/lib/db";
+import {
+  memoryDb,
+  ensureDbSynced,
+  persistInvestigationToDb,
+  deleteInvestigationFromDb,
+  persistAuditLogToDb,
+} from "@/lib/db";
 
 const InvestigationSchema = z.object({
   title: z.string().min(3, "Judul project minimal 3 karakter."),
@@ -13,6 +19,7 @@ const InvestigationSchema = z.object({
 
 export async function GET(req: NextRequest) {
   try {
+    await ensureDbSynced();
     const user = await authenticateRequest(req);
     if (!user) {
       return NextResponse.json({
@@ -78,10 +85,10 @@ export async function POST(req: NextRequest) {
       updatedAt: new Date(),
     };
 
-    memoryDb.investigations.set(invId, newInv);
+    await persistInvestigationToDb(newInv);
 
     // Audit log
-    memoryDb.auditLogs.unshift({
+    await persistAuditLogToDb({
       id: "aud-" + Date.now(),
       userId: user.userId,
       action: "CREATE_INVESTIGATION",
@@ -90,8 +97,6 @@ export async function POST(req: NextRequest) {
       details: { title },
       createdAt: new Date(),
     });
-
-    memoryDb.save();
 
     return NextResponse.json({
       success: true,
@@ -140,9 +145,9 @@ export async function PUT(req: NextRequest) {
       updatedAt: new Date(),
     };
 
-    memoryDb.investigations.set(id, updated);
+    await persistInvestigationToDb(updated);
 
-    memoryDb.auditLogs.unshift({
+    await persistAuditLogToDb({
       id: "aud-" + Date.now(),
       userId: user?.userId || "u-guest",
       action: "UPDATE_INVESTIGATION",
@@ -150,8 +155,6 @@ export async function PUT(req: NextRequest) {
       resourceId: id,
       createdAt: new Date(),
     });
-
-    memoryDb.save();
 
     return NextResponse.json({
       success: true,
@@ -195,9 +198,9 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    memoryDb.investigations.delete(id);
+    await deleteInvestigationFromDb(id);
 
-    memoryDb.auditLogs.unshift({
+    await persistAuditLogToDb({
       id: "aud-" + Date.now(),
       userId: user?.userId || "u-guest",
       action: "DELETE_INVESTIGATION",
@@ -205,8 +208,6 @@ export async function DELETE(req: NextRequest) {
       resourceId: id,
       createdAt: new Date(),
     });
-
-    memoryDb.save();
 
     return NextResponse.json({
       success: true,

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { memoryDb } from "@/lib/db";
+import { memoryDb, ensureDbSynced, clearAuditLogsFromDb } from "@/lib/db";
 
 export async function GET() {
+  await ensureDbSynced();
   return NextResponse.json({
     success: true,
     data: memoryDb.auditLogs,
@@ -10,8 +11,7 @@ export async function GET() {
 
 export async function DELETE(req: NextRequest) {
   try {
-    memoryDb.auditLogs = [];
-    memoryDb.save();
+    await clearAuditLogsFromDb();
     return NextResponse.json({
       success: true,
       message: "Seluruh riwayat audit log keamanan berhasil dibersihkan.",

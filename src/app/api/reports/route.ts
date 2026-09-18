@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { authenticateRequest } from "@/lib/auth/session";
-import { memoryDb } from "@/lib/db";
+import {
+  memoryDb,
+  ensureDbSynced,
+  persistReportToDb,
+  deleteReportFromDb,
+  deleteAllReportsFromDb,
+  persistAuditLogToDb,
+} from "@/lib/db";
 
 const ReportSchema = z.object({
   title: z.string().min(3, "Judul laporan minimal 3 karakter."),
@@ -12,6 +19,7 @@ const ReportSchema = z.object({
 });
 
 export async function GET(req: NextRequest) {
+  await ensureDbSynced();
   const user = await authenticateRequest(req);
   if (!user) {
     return NextResponse.json({
@@ -71,9 +79,9 @@ export async function POST(req: NextRequest) {
         "DOKUMEN HUKUM: Laporan ini disusun semata-mata berdasarkan data publik yang dapat diverifikasi pada waktu pencatatan. NEXUS OSINT TOOLS tidak bertanggung jawab atas perubahan konfigurasi target di masa depan atau penyalahgunaan laporan oleh pihak ketiga.",
     };
 
-    memoryDb.reports.unshift(reportDocument);
+    await persistReportToDb(reportDocument);
 
-    memoryDb.auditLogs.unshift({
+    await persistAuditLogToDb({
       id: "aud-" + Date.now(),
       userId: user?.userId || "u-admin-01",
       action: "GENERATE_REPORT",
@@ -82,8 +90,6 @@ export async function POST(req: NextRequest) {
       details: { title },
       createdAt: new Date(),
     });
-
-    memoryDb.save();
 
     return NextResponse.json({
       success: true,
@@ -121,8 +127,8 @@ export async function DELETE(req: NextRequest) {
 
     if (url.searchParams.get("all") === "true") {
       const count = memoryDb.reports.length;
-      memoryDb.reports = [];
-      memoryDb.auditLogs.unshift({
+      await deleteAllReportsFromDb();
+      await persistAuditLogToDb({
         id: "aud-" + Date.now(),
         userId: user?.userId || "u-admin-01",
         action: "PURGE_ALL_REPORTS",
@@ -130,21 +136,24 @@ export async function DELETE(req: NextRequest) {
         details: { purgedCount: count },
         createdAt: new Date(),
       });
-      memoryDb.save();
       return NextResponse.json({
         success: true,
         message: `Berhasil membersihkan seluruh ${count} dokumen laporan.`,
       });
     }
 
+    if (!id) {
+      return NextResponse.json({ success: false, error: "ID laporan diperlukan." }, { status: 400 });
+    }
+
     const initialLen = memoryDb.reports.length;
-    memoryDb.reports = memoryDb.reports.filter((r) => r.reportId !== id);
+    await deleteReportFromDb(id);
 
     if (memoryDb.reports.length === initialLen) {
       return NextResponse.json({ success: false, error: "Laporan tidak ditemukan." }, { status: 404 });
     }
 
-    memoryDb.auditLogs.unshift({
+    await persistAuditLogToDb({
       id: "aud-" + Date.now(),
       userId: user?.userId || "u-admin-01",
       action: "DELETE_REPORT",
@@ -152,8 +161,6 @@ export async function DELETE(req: NextRequest) {
       resourceId: id,
       createdAt: new Date(),
     });
-
-    memoryDb.save();
 
     return NextResponse.json({
       success: true,
@@ -174,7 +181,7 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ success: false, error: "ID laporan diperlukan." }, { status: 400 });
     }
 
-    const report = memoryDb.reports.find((r) => r.reportId === reportId);
+    const report = memoryDb.reports.find((r) => (r.reportId || r.id) === reportId);
     if (!report) {
       return NextResponse.json({ success: false, error: "Laporan tidak ditemukan." }, { status: 404 });
     }
@@ -183,7 +190,9 @@ export async function PATCH(req: NextRequest) {
     if (title) report.title = title;
     if (analystNotes) report.analystNotes = analystNotes;
 
-    memoryDb.auditLogs.unshift({
+    await persistReportToDb(report);
+
+    await persistAuditLogToDb({
       id: "aud-" + Date.now(),
       userId: user?.userId || "u-admin-01",
       action: "UPDATE_REPORT",

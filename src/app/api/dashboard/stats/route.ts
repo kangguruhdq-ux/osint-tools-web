@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateRequest } from "@/lib/auth/session";
-import { memoryDb } from "@/lib/db";
+import { memoryDb, ensureDbSynced, persistAuditLogToDb, persistScanResultToDb } from "@/lib/db";
 
 export async function GET(req: NextRequest) {
   try {
+    await ensureDbSynced();
     const user = await authenticateRequest(req);
     if (!user) {
       return NextResponse.json(
@@ -108,8 +109,8 @@ export async function POST(req: NextRequest) {
       createdAt: new Date(),
     };
 
-    memoryDb.auditLogs.unshift(logEntry);
-    memoryDb.scanResults.unshift({
+    await persistAuditLogToDb(logEntry);
+    await persistScanResultToDb({
       id: "scan-" + Date.now() + "-" + Math.random().toString(36).substring(2, 6),
       userId: user.userId,
       toolId: toolId || "osint-scan",
@@ -120,7 +121,6 @@ export async function POST(req: NextRequest) {
       sourceInfo: "NEXUS Core Engine",
       createdAt: new Date(),
     });
-    memoryDb.save();
 
     return NextResponse.json({
       success: true,

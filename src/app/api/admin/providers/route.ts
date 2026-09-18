@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { memoryDb } from "@/lib/db";
+import { memoryDb, ensureDbSynced, persistAuditLogToDb } from "@/lib/db";
 import { encrypt, generateKeyHint } from "@/lib/security/encryption";
 import { authenticateRequest } from "@/lib/auth/session";
 
@@ -12,6 +12,7 @@ const ProviderUpdateSchema = z.object({
 });
 
 export async function GET() {
+  await ensureDbSynced();
   const providers = Array.from(memoryDb.providers.values()).map((p) => ({
     id: p.id,
     key: p.key,
@@ -66,9 +67,10 @@ export async function POST(req: NextRequest) {
     provider.status = "ACTIVE"; // activated upon saving encrypted key
 
     memoryDb.providers.set(key, provider);
+    memoryDb.save();
 
     // Audit log
-    memoryDb.auditLogs.unshift({
+    await persistAuditLogToDb({
       id: "aud-" + Date.now(),
       userId: user?.userId || "u-admin-01",
       action: "API_KEY_ENCRYPTED_SAVE",
@@ -77,8 +79,6 @@ export async function POST(req: NextRequest) {
       details: { keyHint: hint, providerName: provider.name },
       createdAt: new Date(),
     });
-
-    memoryDb.save();
 
     return NextResponse.json({
       success: true,

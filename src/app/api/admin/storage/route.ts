@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateRequest } from "@/lib/auth/session";
-import { memoryDb } from "@/lib/db";
+import {
+  memoryDb,
+  ensureDbSynced,
+  cleanAuditLogsInDb,
+  cleanReportsInDb,
+  persistAuditLogToDb,
+} from "@/lib/db";
 import os from "os";
 
 export async function GET(req: NextRequest) {
   try {
+    await ensureDbSynced();
     const user = await authenticateRequest(req);
     if (!user || user.role !== "ADMIN") {
       return NextResponse.json({ success: false, error: "Akses ditolak. Khusus Administrator." }, { status: 403 });
@@ -94,7 +101,7 @@ export async function POST(req: NextRequest) {
         const days = params?.days || 30;
         const cutoff = Date.now() - days * 24 * 3600 * 1000;
         const before = memoryDb.auditLogs.length;
-        memoryDb.auditLogs = memoryDb.auditLogs.filter((l) => new Date(l.createdAt).getTime() > cutoff);
+        await cleanAuditLogsInDb(cutoff);
         affectedCount = before - memoryDb.auditLogs.length;
         message = `Berhasil memangkas ${affectedCount} catatan audit log yang lebih lama dari ${days} hari.`;
         break;
@@ -110,7 +117,7 @@ export async function POST(req: NextRequest) {
         const days = params?.days || 60;
         const cutoff = Date.now() - days * 24 * 3600 * 1000;
         const before = memoryDb.reports.length;
-        memoryDb.reports = memoryDb.reports.filter((r) => new Date(r.generatedAt).getTime() > cutoff);
+        await cleanReportsInDb(cutoff);
         affectedCount = before - memoryDb.reports.length;
         message = `Berhasil membersihkan ${affectedCount} dokumen laporan lama (> ${days} hari).`;
         break;
@@ -120,7 +127,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: false, error: "Aksi pemeliharaan tidak dikenali." }, { status: 400 });
     }
 
-    memoryDb.auditLogs.unshift({
+    await persistAuditLogToDb({
       id: "aud-" + Date.now(),
       userId: user.userId,
       action: "STORAGE_MAINTENANCE_" + action,
@@ -128,8 +135,6 @@ export async function POST(req: NextRequest) {
       details: { action, affectedCount, message },
       createdAt: new Date(),
     });
-
-    memoryDb.save();
 
     return NextResponse.json({
       success: true,

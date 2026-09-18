@@ -1,7 +1,8 @@
 const { execSync } = require("child_process");
 
-// Determine database connection URL from environment
 const dbUrl =
+  process.env.POSTGRES_URL_NON_POOLING ||
+  process.env.DATABASE_URL_UNPOOLED ||
   process.env.DATABASE_URL ||
   process.env.POSTGRES_PRISMA_URL ||
   process.env.POSTGRES_URL ||

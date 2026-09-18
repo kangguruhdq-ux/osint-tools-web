@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { verifyToken, TokenPayload } from "./jwt";
-import { memoryDb } from "@/lib/db";
+import { memoryDb, ensureDbSynced } from "@/lib/db";
 
 export const SESSION_COOKIE_NAME = "nexus_session";
 
@@ -22,6 +22,7 @@ export function getUserFromHeader(authHeader: string | null | undefined): TokenP
 }
 
 export async function authenticateRequest(req: Request): Promise<TokenPayload | null> {
+  await ensureDbSynced();
   let user: TokenPayload | null = null;
 
   // 1. Check Authorization header
