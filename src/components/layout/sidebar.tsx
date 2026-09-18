@@ -37,7 +37,7 @@ export function Sidebar({ isOpen, onClose, userRole = "USER" }: SidebarProps) {
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "OSINT Workspace", href: "/workspace", icon: FolderKanban },
-    { name: "Katalog 52 Tools", href: "/tools", icon: Wrench },
+    { name: "Katalog 60 Tools", href: "/tools", icon: Wrench },
     { name: "Laporan Investigasi", href: "/reports", icon: FileText },
     { name: "Keyword & RSS Monitor", href: "/monitors", icon: Radio },
   ];
@@ -195,7 +195,7 @@ export function Sidebar({ isOpen, onClose, userRole = "USER" }: SidebarProps) {
               <span>Akses Komunitas Gratis</span>
             </div>
             <p className="text-[11px] text-slate-400 leading-relaxed">
-              Seluruh 52 tools aktif bebas tanpa batasan kuota berbayar.
+              Seluruh 60 tools aktif bebas tanpa batasan kuota berbayar.
             </p>
             <div className="mt-2 flex items-center gap-1.5 text-[10px] text-emerald-300 font-mono">
               <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />

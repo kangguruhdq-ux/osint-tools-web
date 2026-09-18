@@ -420,7 +420,7 @@ export const TOOLS_CATALOG: ToolDefinition[] = [
     badge: "CLONER LIVE",
     requiredProviderName: "DOM Asset Resolver Engine",
   },
-  // 38-52 New High-Impact OSINT & Converter Tools
+  // 38-60 Real High-Impact OSINT & Converter Tools
   {
     id: "subdomain-finder",
     name: "Subdomain Finder via CT Logs",

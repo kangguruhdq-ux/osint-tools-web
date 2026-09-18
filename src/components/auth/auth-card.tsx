@@ -265,8 +265,8 @@ export function AuthCard({ initialMode = "login" }: AuthCardProps) {
               </CardTitle>
               <CardDescription className="text-xs text-slate-400">
                 {mode === "login"
-                  ? "Akses dashboard intelijen publik dan 54 utilitas digital legal."
-                  : "Dapatkan akses gratis tanpa batas ke seluruh 54 tools dan workspace."}
+                  ? "Akses dashboard intelijen publik dan 60 utilitas digital legal."
+                  : "Dapatkan akses gratis tanpa batas ke seluruh 60 tools dan workspace."}
               </CardDescription>
             </CardHeader>
 

@@ -81,7 +81,7 @@ export default function LandingPage() {
             <Sparkles className="h-3.5 w-3.5 text-cyan-400" />
             <span>NEXUS OSINT TOOLS 1.0 Enterprise SaaS</span>
             <span className="hidden sm:inline text-slate-500">•</span>
-            <span className="hidden sm:inline text-slate-300">36 Tools Nyata Terintegrasi</span>
+            <span className="hidden sm:inline text-slate-300">60 Tools Nyata Terintegrasi</span>
           </div>
 
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-white max-w-5xl mx-auto leading-tight sm:leading-none">
@@ -133,7 +133,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 36 TOOLS SECTION */}
+      {/* 60 TOOLS SECTION */}
       <section id="tools" className="py-20 bg-slate-900/30 border-y border-slate-800/80">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
@@ -143,7 +143,7 @@ export default function LandingPage() {
                 <span>Katalog Fungsional Penuh</span>
               </div>
               <h2 className="text-3xl font-bold text-white tracking-tight">
-                36 Tools Nyata Terintegrasi
+                60 Tools Nyata Terintegrasi
               </h2>
               <p className="text-sm text-slate-400 mt-1">
                 Semua tool dilengkapi backend nyata, validasi input, error handling, dan proteksi keamanan.
@@ -168,7 +168,7 @@ export default function LandingPage() {
           {/* Category Filter Pills */}
           <div className="flex flex-wrap gap-2 mb-8">
             {[
-              { id: "all", label: "Semua 36 Tools" },
+              { id: "all", label: "Semua 60 Tools" },
               { id: "osint", label: "Domain & IP OSINT" },
               { id: "downloader", label: "Media Downloader" },
               { id: "ai", label: "AI & Threat Intel" },
@@ -398,7 +398,7 @@ export default function LandingPage() {
                   <Globe className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-semibold text-white">Seluruh 36 Tools Aktif</h3>
+                  <h3 className="text-base font-semibold text-white">Seluruh 60 Tools Aktif</h3>
                   <p className="text-xs text-slate-400 mt-1 leading-relaxed">
                     Akses bebas ke modul Network OSINT, Media Downloader publik, NLP/AI Threat Intel, serta File & Cryptography utilities tanpa paywall.
                   </p>

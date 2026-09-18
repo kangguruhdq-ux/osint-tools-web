@@ -27,7 +27,7 @@ export function Navbar() {
         {/* Desktop Nav Links */}
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-300">
           <Link href="/#tools" className="hover:text-cyan-400 transition-colors">
-            52 Tools
+            60 Tools
           </Link>
           <Link href="/#features" className="hover:text-cyan-400 transition-colors">
             Fitur
@@ -77,7 +77,7 @@ export function Navbar() {
               onClick={() => setMobileMenuOpen(false)}
               className="py-2 hover:text-cyan-400"
             >
-              52 Tools
+              60 Tools
             </Link>
             <Link
               href="/#features"

@@ -110,7 +110,7 @@ export function Topbar({
                 <div className="rounded-lg bg-slate-950/80 p-2 border border-slate-800/80">
                   <div className="flex items-center gap-1.5 text-emerald-400 font-medium text-[11px]">
                     <CheckCircle2 className="h-3.5 w-3.5" />
-                    <span>52 Tools Beroperasi Normal</span>
+                    <span>60 Tools Beroperasi Normal</span>
                   </div>
                   <p className="text-slate-400 mt-1">Seluruh adapter provider publik aktif dan siap menerima query.</p>
                 </div>

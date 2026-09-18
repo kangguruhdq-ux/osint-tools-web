@@ -14,7 +14,7 @@ const NAV_ITEMS = [
     icon: LayoutDashboard,
   },
   {
-    label: "54 Tools",
+    label: "60 Tools",
     href: "/tools",
     icon: Terminal,
   },

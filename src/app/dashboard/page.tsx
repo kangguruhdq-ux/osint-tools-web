@@ -147,7 +147,7 @@ export default function DashboardPage() {
             <Link href="/tools">
               <Button variant="outline" size="sm" className="gap-1.5 text-xs border-cyan-500/30 text-cyan-400 hover:bg-cyan-950/30">
                 <Wrench className="h-4 w-4" />
-                <span>52 Tools</span>
+                <span>60 Tools</span>
               </Button>
             </Link>
           </div>
@@ -160,7 +160,7 @@ export default function DashboardPage() {
           </div>
           <div className="flex-1 text-[12px] leading-relaxed">
             <span className="font-semibold text-white">Privasi Akun & Isolasi Data Terjamin: </span>
-            Seluruh 52 tools dapat digunakan tanpa batas. Hasil pemindaian, unduhan, dan ringkasan investigasi Anda terisolasi secara privat pada akun Anda dan tidak akan pernah dibagikan ke publik.
+            Seluruh 60 tools dapat digunakan tanpa batas. Hasil pemindaian, unduhan, dan ringkasan investigasi Anda terisolasi secara privat pada akun Anda dan tidak akan pernah dibagikan ke publik.
           </div>
         </div>
 
@@ -265,12 +265,12 @@ export default function DashboardPage() {
                 </div>
                 <h4 className="text-sm font-semibold text-white">Belum Ada Pemindaian</h4>
                 <p className="text-xs text-slate-400 max-w-md mx-auto mt-1 mb-4 leading-relaxed">
-                  Workspace Anda siap digunakan. Jalankan pemindaian pertama Anda dengan memilih salah satu dari 52 tools intelijen OSINT.
+                  Workspace Anda siap digunakan. Jalankan pemindaian pertama Anda dengan memilih salah satu dari 60 tools intelijen OSINT.
                 </p>
                 <Link href="/tools">
                   <Button variant="glow" size="sm" className="gap-2 text-xs">
                     <Sparkles className="h-3.5 w-3.5" />
-                    <span>Jelajahi 52 Tools Sekarang</span>
+                    <span>Jelajahi 60 Tools Sekarang</span>
                   </Button>
                 </Link>
               </div>
@@ -337,7 +337,7 @@ export default function DashboardPage() {
 
             <Link href="/tools" className="mt-4">
               <Button variant="outline" size="sm" className="w-full text-xs gap-1.5 border-slate-700 hover:border-slate-600">
-                <span>Lihat Seluruh 52 Tools</span>
+                <span>Lihat Seluruh 60 Tools</span>
                 <ArrowRight className="h-3.5 w-3.5" />
               </Button>
             </Link>

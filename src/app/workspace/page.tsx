@@ -213,7 +213,7 @@ export default function WorkspacePage() {
               Project Investigasi OSINT
             </h1>
             <p className="text-xs text-slate-400 mt-1">
-              Simpan temuan, kelola hasil scan 36 tools, buat timeline, dan ekspor laporan intelijen.
+              Simpan temuan, kelola hasil scan 60 tools, buat timeline, dan ekspor laporan intelijen.
             </p>
           </div>
 

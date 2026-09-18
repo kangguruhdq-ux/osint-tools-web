@@ -52,7 +52,7 @@ export function Footer() {
               </li>
               <li>
                 <Link href="/tools" className="hover:text-cyan-400 transition-colors font-medium text-blue-400">
-                  Semua 52 Tools →
+                  Semua 60 Tools →
                 </Link>
               </li>
             </ul>

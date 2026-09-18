@@ -386,7 +386,7 @@ export default function AdminUsersPage() {
                 className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-slate-200 focus:border-blue-500 focus:outline-none"
               >
                 <option value="USER">USER (Akses Terbatas)</option>
-                <option value="ANALYST">ANALYST (Akses 36 Tools & Workspace)</option>
+                <option value="ANALYST">ANALYST (Akses 60 Tools & Workspace)</option>
                 <option value="ADMIN">ADMIN (Akses Penuh Console)</option>
               </select>
             </div>
