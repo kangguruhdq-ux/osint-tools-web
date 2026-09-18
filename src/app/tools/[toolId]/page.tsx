@@ -235,6 +235,24 @@ export default function ToolDetailPage({ params }: ToolPageProps) {
           payload = { userAgent: trimmedInput };
         } else if (tool.id === "forensic-decoder") {
           payload = { payload: trimmedInput, encoding: forensicEncoding };
+        } else if (tool.id === "redirect-tracer") {
+          payload = { url: trimmedInput };
+        } else if (tool.id === "disposable-email-detector") {
+          payload = { email: trimmedInput };
+        } else if (tool.id === "asn-lookup") {
+          payload = { target: trimmedInput };
+        } else if (tool.id === "security-txt-checker") {
+          payload = { domain: trimmedInput };
+        } else if (tool.id === "port-scanner") {
+          payload = { target: trimmedInput };
+        } else if (tool.id === "cidr-calculator") {
+          payload = { cidr: trimmedInput };
+        } else if (tool.id === "password-auditor") {
+          payload = { password: trimmedInput };
+        } else if (tool.id === "ct-logs") {
+          payload = { domain: trimmedInput };
+        } else if (tool.id === "email-breach-checker") {
+          payload = { target: trimmedInput };
         } else if (tool.id === "report-generator") {
           const targetVal = trimmedInput || "Target Investigasi Publik";
           const cleanTarget = targetVal.replace(/^https?:\/\//i, "").replace(/\/$/, "");
@@ -852,6 +870,24 @@ export default function ToolDetailPage({ params }: ToolPageProps) {
                             ? "torvalds"
                             : tool.id === "mac-lookup"
                             ? "00:1A:2B:3C:4D:5E"
+                            : tool.id === "redirect-tracer"
+                            ? "https://bit.ly/3xXyZ atau link pendek..."
+                            : tool.id === "disposable-email-detector"
+                            ? "user@10minutemail.com atau domain.com"
+                            : tool.id === "asn-lookup"
+                            ? "AS13335, 1.1.1.1, atau google.com"
+                            : tool.id === "security-txt-checker"
+                            ? "github.com atau domain target..."
+                            : tool.id === "port-scanner"
+                            ? "scanme.nmap.org atau 1.1.1.1"
+                            : tool.id === "cidr-calculator"
+                            ? "192.168.1.0/24 atau 10.0.0.0/16"
+                            : tool.id === "password-auditor"
+                            ? "Ketik kata sandi untuk diuji entropi & crack time..."
+                            : tool.id === "ct-logs"
+                            ? "target.com (mencari sertifikat & subdomain)"
+                            : tool.id === "email-breach-checker"
+                            ? "analis@perusahaan.id atau domain.com"
                             : tool.id === "username-checker"
                             ? "torvalds"
                             : tool.id.includes("email")
@@ -4181,6 +4217,589 @@ export default function ToolDetailPage({ params }: ToolPageProps) {
                         </div>
                       )}
 
+                      {/* 1. HTTP Redirect Tracer Display */}
+                      {resultData.hops && tool.id === "redirect-tracer" && (
+                        <div className="space-y-4">
+                          <div className="flex flex-wrap items-center justify-between gap-2 p-3.5 rounded-xl border border-blue-500/20 bg-blue-950/20">
+                            <div className="space-y-1">
+                              <span className="text-[10px] font-mono text-cyan-400 uppercase tracking-wider block">Ringkasan Redirect Tracer</span>
+                              <div className="flex flex-wrap items-center gap-2 text-xs">
+                                <Badge variant="outline" className="border-cyan-500/30 text-cyan-300">
+                                  Total Lompatan: {resultData.totalHops} Hop
+                                </Badge>
+                                <Badge variant="outline" className="border-blue-500/30 text-blue-300">
+                                  Total Latensi: {resultData.totalLatencyMs} ms
+                                </Badge>
+                                {resultData.isShortener && (
+                                  <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30">
+                                    Shortlink Terdeteksi
+                                  </Badge>
+                                )}
+                                {resultData.loopDetected && (
+                                  <Badge className="bg-red-500/20 text-red-300 border-red-500/30">
+                                    Redirect Loop!
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                navigator.clipboard.writeText(resultData.finalUrl);
+                                success("URL tujuan akhir berhasil disalin!", "Disalin");
+                              }}
+                              className="gap-1.5 text-xs text-slate-300"
+                            >
+                              <Copy className="h-3.5 w-3.5" />
+                              <span>Salin URL Akhir</span>
+                            </Button>
+                          </div>
+
+                          <div className="p-4 rounded-xl border border-emerald-500/30 bg-emerald-950/20 space-y-1">
+                            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-400">
+                              <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                              <span>URL Tujuan Akhir (Landing Destination):</span>
+                            </div>
+                            <a
+                              href={resultData.finalUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-mono text-xs sm:text-sm text-emerald-200 hover:text-emerald-100 underline break-all flex items-center gap-1.5"
+                            >
+                              <span>{resultData.finalUrl}</span>
+                              <ExternalLink className="h-3 w-3 shrink-0" />
+                            </a>
+                          </div>
+
+                          <div className="space-y-2">
+                            <h5 className="text-xs font-semibold text-slate-300">Rantai Jalur Hop-by-Hop:</h5>
+                            <div className="space-y-2.5">
+                              {resultData.hops.map((hop: any, idx: number) => (
+                                <div
+                                  key={idx}
+                                  className="p-3.5 rounded-xl border border-slate-800 bg-slate-900/80 space-y-1.5"
+                                >
+                                  <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <div className="flex items-center gap-2">
+                                      <span className="h-5 w-5 rounded-full bg-cyan-950 text-cyan-400 border border-cyan-700/50 flex items-center justify-center text-[10px] font-bold">
+                                        {hop.hopNumber}
+                                      </span>
+                                      <Badge
+                                        className={cn(
+                                          "text-[10px] font-mono",
+                                          [301, 302, 307, 308].includes(hop.statusCode)
+                                            ? "bg-amber-950/60 text-amber-300 border-amber-700/40"
+                                            : hop.statusCode === 200
+                                            ? "bg-emerald-950/60 text-emerald-300 border-emerald-700/40"
+                                            : "bg-slate-800 text-slate-300"
+                                        )}
+                                      >
+                                        HTTP {hop.statusCode} {hop.statusText}
+                                      </Badge>
+                                    </div>
+                                    <span className="text-[10px] font-mono text-slate-400">
+                                      {hop.latencyMs} ms {hop.server && `• Server: ${hop.server}`}
+                                    </span>
+                                  </div>
+
+                                  <div className="font-mono text-xs text-slate-300 break-all pl-7">
+                                    {hop.url}
+                                  </div>
+
+                                  {hop.location && (
+                                    <div className="pl-7 text-[11px] text-cyan-400 flex items-center gap-1 font-mono break-all">
+                                      <span>➔ Pengalihan ke:</span>
+                                      <span className="underline">{hop.location}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 2. Disposable Email Detector Display */}
+                      {resultData.isDisposable !== undefined && tool.id === "disposable-email-detector" && (
+                        <div className="space-y-4">
+                          <div
+                            className={cn(
+                              "p-4 rounded-xl border space-y-2",
+                              resultData.isDisposable
+                                ? "border-red-500/40 bg-red-950/30 text-red-200"
+                                : "border-emerald-500/40 bg-emerald-950/30 text-emerald-200"
+                            )}
+                          >
+                            <div className="flex items-center gap-2">
+                              {resultData.isDisposable ? (
+                                <ShieldAlert className="h-5 w-5 text-red-400 shrink-0" />
+                              ) : (
+                                <ShieldCheck className="h-5 w-5 text-emerald-400 shrink-0" />
+                              )}
+                              <h4 className="text-sm font-bold tracking-tight">
+                                {resultData.isDisposable
+                                  ? "TERDETEKSI SEBAGAI EMAIL SEMENTARA (BURNER / DISPOSABLE)"
+                                  : "DOMAIN EMAIL PERSISTEN / RESMI TERVALIDASI"}
+                              </h4>
+                            </div>
+                            <p className="text-xs opacity-90 leading-relaxed">{resultData.verdict}</p>
+                          </div>
+
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                            <div className="p-3 rounded-xl border border-slate-800 bg-slate-900/60">
+                              <span className="text-[10px] text-slate-400 block mb-1">Skor Risiko Penipuan:</span>
+                              <div className="flex items-baseline gap-1">
+                                <span className={cn("text-xl font-bold font-mono", resultData.riskScore >= 50 ? "text-red-400" : "text-emerald-400")}>
+                                  {resultData.riskScore}%
+                                </span>
+                                <span className="text-[10px] text-slate-400">({resultData.riskLevel})</span>
+                              </div>
+                            </div>
+
+                            <div className="p-3 rounded-xl border border-slate-800 bg-slate-900/60">
+                              <span className="text-[10px] text-slate-400 block mb-1">Status Server MX:</span>
+                              <span className={cn("text-xs font-semibold font-mono", resultData.mxStatus === "VALID" ? "text-emerald-400" : "text-amber-400")}>
+                                {resultData.mxStatus}
+                              </span>
+                            </div>
+
+                            <div className="p-3 rounded-xl border border-slate-800 bg-slate-900/60">
+                              <span className="text-[10px] text-slate-400 block mb-1">Kategori Domain:</span>
+                              <span className="text-xs font-semibold text-cyan-300">
+                                {resultData.isDisposable ? "Burner / Temp" : resultData.isFreeProvider ? "Konsumen Gratis" : "Korporat / Organisasi"}
+                              </span>
+                            </div>
+
+                            <div className="p-3 rounded-xl border border-slate-800 bg-slate-900/60">
+                              <span className="text-[10px] text-slate-400 block mb-1">Total MX Record:</span>
+                              <span className="text-xl font-bold font-mono text-white">
+                                {resultData.totalMxRecords || 0}
+                              </span>
+                            </div>
+                          </div>
+
+                          {resultData.mxRecords && resultData.mxRecords.length > 0 && (
+                            <div className="space-y-1.5">
+                              <h5 className="text-xs font-semibold text-slate-300">Server Pertukaran Email (MX Records):</h5>
+                              <div className="rounded-xl border border-slate-800 bg-slate-950 overflow-hidden divide-y divide-slate-800/80">
+                                {resultData.mxRecords.map((mx: any, idx: number) => (
+                                  <div key={idx} className="p-2.5 px-3 flex items-center justify-between text-xs font-mono">
+                                    <span className="text-slate-300">{mx.exchange}</span>
+                                    <Badge variant="outline" className="text-[10px] border-slate-700 text-slate-400">
+                                      Prioritas {mx.priority}
+                                    </Badge>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* 3. ASN & BGP Route Explorer Display */}
+                      {resultData.asn && tool.id === "asn-lookup" && (
+                        <div className="space-y-4">
+                          <div className="p-4 rounded-xl border border-cyan-500/20 bg-cyan-950/20 flex flex-wrap items-center justify-between gap-3">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <Badge className="bg-cyan-500/20 text-cyan-300 border-cyan-500/40 text-xs font-mono">
+                                  {resultData.asn}
+                                </Badge>
+                                <h4 className="text-sm font-bold text-white">{resultData.organization}</h4>
+                              </div>
+                              <p className="text-xs text-slate-400">
+                                Negara: <span className="text-slate-200 font-semibold">{resultData.country} ({resultData.countryCode})</span>
+                                {resultData.city && ` • Kota: ${resultData.city}`}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="p-3.5 rounded-xl border border-slate-800 bg-slate-900/60 space-y-1">
+                              <span className="text-[10px] text-slate-400 block font-mono">Alokasi Blok Prefiks BGP:</span>
+                              <span className="text-xs font-bold font-mono text-cyan-300">{resultData.networkPrefix}</span>
+                            </div>
+                            <div className="p-3.5 rounded-xl border border-slate-800 bg-slate-900/60 space-y-1">
+                              <span className="text-[10px] text-slate-400 block font-mono">IP yang Diterjemahkan:</span>
+                              <span className="text-xs font-bold font-mono text-emerald-300">{resultData.resolvedIp}</span>
+                            </div>
+                            <div className="p-3.5 rounded-xl border border-slate-800 bg-slate-900/60 space-y-1">
+                              <span className="text-[10px] text-slate-400 block font-mono">Penyedia Layanan Internet (ISP):</span>
+                              <span className="text-xs font-semibold text-slate-200">{resultData.isp}</span>
+                            </div>
+                            <div className="p-3.5 rounded-xl border border-slate-800 bg-slate-900/60 space-y-1">
+                              <span className="text-[10px] text-slate-400 block font-mono">Sumber Registri Global:</span>
+                              <span className="text-xs font-semibold text-slate-300">{resultData.source}</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 4. security.txt RFC 9116 Inspector Display */}
+                      {resultData.complianceStatus && tool.id === "security-txt-checker" && (
+                        <div className="space-y-4">
+                          <div
+                            className={cn(
+                              "p-4 rounded-xl border space-y-1.5",
+                              resultData.complianceStatus === "COMPLIANT"
+                                ? "border-emerald-500/40 bg-emerald-950/20 text-emerald-200"
+                                : resultData.complianceStatus === "EXPIRED"
+                                ? "border-amber-500/40 bg-amber-950/20 text-amber-200"
+                                : "border-rose-500/40 bg-rose-950/20 text-rose-200"
+                            )}
+                          >
+                            <div className="flex items-center gap-2">
+                              {resultData.complianceStatus === "COMPLIANT" ? (
+                                <CheckCircle className="h-5 w-5 text-emerald-400 shrink-0" />
+                              ) : (
+                                <AlertTriangle className="h-5 w-5 text-amber-400 shrink-0" />
+                              )}
+                              <h4 className="text-sm font-bold">
+                                {resultData.complianceStatus === "COMPLIANT"
+                                  ? "MEMENUHI STANDAR RFC 9116 (COMPLIANT)"
+                                  : resultData.complianceStatus === "EXPIRED"
+                                  ? "FILE SECURITY.TXT KEDALUWARSA (EXPIRED)"
+                                  : "TIDAK DITEMUKAN / NON-COMPLIANT"}
+                              </h4>
+                            </div>
+                            <p className="text-xs opacity-90 leading-relaxed">
+                              {resultData.found
+                                ? `File security.txt resmi ditemukan di ${resultData.discoveredUrl} dengan ${resultData.totalDirectives} direktif.`
+                                : resultData.message}
+                            </p>
+                          </div>
+
+                          {resultData.found && resultData.groupedDirectives && (
+                            <div className="space-y-3">
+                              {resultData.groupedDirectives.contacts?.length > 0 && (
+                                <div className="p-3 rounded-xl border border-slate-800 bg-slate-900/60 space-y-1.5">
+                                  <span className="text-[10px] font-mono text-cyan-400 block">Kontak Pelaporan Kerentanan:</span>
+                                  <div className="space-y-1">
+                                    {resultData.groupedDirectives.contacts.map((c: string, idx: number) => (
+                                      <div key={idx} className="text-xs font-mono text-white flex items-center gap-2">
+                                        <Mail className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
+                                        <span>{c}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {resultData.groupedDirectives.policies?.length > 0 && (
+                                <div className="p-3 rounded-xl border border-slate-800 bg-slate-900/60 space-y-1.5">
+                                  <span className="text-[10px] font-mono text-emerald-400 block">Kebijakan Vulnerability Disclosure Policy (VDP):</span>
+                                  {resultData.groupedDirectives.policies.map((p: string, idx: number) => (
+                                    <a
+                                      key={idx}
+                                      href={p}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-xs font-mono text-emerald-300 hover:underline flex items-center gap-1.5 break-all"
+                                    >
+                                      <span>{p}</span>
+                                      <ExternalLink className="h-3 w-3 shrink-0" />
+                                    </a>
+                                  ))}
+                                </div>
+                              )}
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                                <div className="p-3 rounded-xl border border-slate-800 bg-slate-900/60">
+                                  <span className="text-[10px] text-slate-400 block font-mono">Batas Kedaluwarsa (Expires):</span>
+                                  <span className={cn("font-semibold font-mono", resultData.isExpired ? "text-red-400" : "text-slate-200")}>
+                                    {resultData.expiresAt ? new Date(resultData.expiresAt).toLocaleDateString("id-ID") : "Tidak ditentukan"}
+                                  </span>
+                                </div>
+                                <div className="p-3 rounded-xl border border-slate-800 bg-slate-900/60">
+                                  <span className="text-[10px] text-slate-400 block font-mono">Kunci Enkripsi PGP:</span>
+                                  <span className="font-semibold text-slate-300">
+                                    {resultData.groupedDirectives.encryption?.length ? "Tersedia" : "Tidak disertakan"}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* 5. Common Port & Service Inspector Display */}
+                      {resultData.ports && tool.id === "port-scanner" && (
+                        <div className="space-y-4">
+                          <div className="flex flex-wrap items-center justify-between gap-2 p-3.5 rounded-xl border border-cyan-500/20 bg-cyan-950/20">
+                            <div>
+                              <span className="text-[10px] font-mono text-cyan-400 block">Hasil Audit Port Target: {resultData.target} ({resultData.targetIp})</span>
+                              <div className="flex items-center gap-2 mt-1">
+                                <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 text-xs">
+                                  {resultData.openCount} Port Terbuka
+                                </Badge>
+                                <Badge variant="outline" className="border-slate-700 text-slate-400 text-xs">
+                                  {resultData.closedCount} Port Tertutup / Filtered
+                                </Badge>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            {resultData.ports.map((p: any) => (
+                              <div
+                                key={p.port}
+                                className={cn(
+                                  "p-3.5 rounded-xl border flex items-center justify-between gap-3 transition-all",
+                                  p.isOpen
+                                    ? "border-emerald-500/30 bg-emerald-950/15"
+                                    : "border-slate-800 bg-slate-900/40 opacity-70"
+                                )}
+                              >
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs font-bold font-mono text-white">Port {p.port}</span>
+                                    <span className="text-[10px] text-slate-400">({p.service})</span>
+                                  </div>
+                                  <p className="text-[11px] text-slate-400">{p.details}</p>
+                                </div>
+
+                                <div className="text-right shrink-0">
+                                  <Badge
+                                    className={cn(
+                                      "text-[10px] font-mono",
+                                      p.isOpen ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40" : "bg-slate-800 text-slate-400"
+                                    )}
+                                  >
+                                    {p.status}
+                                  </Badge>
+                                  <span className="text-[10px] font-mono text-slate-500 block mt-1">{p.latencyMs} ms</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 6. CIDR & IP Subnet Calculator Display */}
+                      {resultData.networkAddress && tool.id === "cidr-calculator" && (
+                        <div className="space-y-4">
+                          <div className="p-4 rounded-xl border border-blue-500/20 bg-blue-950/20 flex flex-wrap items-center justify-between gap-3">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-lg font-bold font-mono text-cyan-300">{resultData.cidr}</span>
+                                <Badge variant="outline" className="text-xs border-cyan-500/40 text-cyan-300">
+                                  Kelas {resultData.ipClass}
+                                </Badge>
+                              </div>
+                              <span className="text-xs text-slate-400 block">{resultData.ipScope}</span>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs font-mono">
+                            <div className="p-3 rounded-xl border border-slate-800 bg-slate-900/60">
+                              <span className="text-[10px] text-slate-400 block font-sans">Network Address:</span>
+                              <span className="font-bold text-emerald-300">{resultData.networkAddress}</span>
+                            </div>
+                            <div className="p-3 rounded-xl border border-slate-800 bg-slate-900/60">
+                              <span className="text-[10px] text-slate-400 block font-sans">Broadcast Address:</span>
+                              <span className="font-bold text-rose-300">{resultData.broadcastAddress}</span>
+                            </div>
+                            <div className="p-3 rounded-xl border border-slate-800 bg-slate-900/60">
+                              <span className="text-[10px] text-slate-400 block font-sans">Subnet Mask:</span>
+                              <span className="font-bold text-cyan-300">{resultData.subnetMask}</span>
+                            </div>
+                            <div className="p-3 rounded-xl border border-slate-800 bg-slate-900/60">
+                              <span className="text-[10px] text-slate-400 block font-sans">Wildcard Mask:</span>
+                              <span className="font-bold text-amber-300">{resultData.wildcardMask}</span>
+                            </div>
+                          </div>
+
+                          <div className="p-3.5 rounded-xl border border-slate-800 bg-slate-900/60 space-y-2 text-xs">
+                            <div className="flex items-center justify-between">
+                              <span className="text-slate-400">Rentang Host Valid:</span>
+                              <span className="font-mono text-cyan-300 font-semibold">
+                                {resultData.firstUsableIp} ➔ {resultData.lastUsableIp}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-slate-400">Jumlah Host Dapat Dipakai (Usable):</span>
+                              <span className="font-mono text-emerald-400 font-bold">
+                                {Number(resultData.usableHosts).toLocaleString("id-ID")} Host
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-slate-400">Total Alamat IP ({`2^${32 - resultData.prefixLength}`}):</span>
+                              <span className="font-mono text-slate-300">
+                                {Number(resultData.totalAddresses).toLocaleString("id-ID")}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between pt-1 border-t border-slate-800">
+                              <span className="text-slate-400">Representasi Biner:</span>
+                              <span className="font-mono text-[11px] text-slate-300 break-all">{resultData.binarySubnetMask}</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 7. Password Entropy & Security Auditor Display */}
+                      {resultData.entropyBits !== undefined && tool.id === "password-auditor" && (
+                        <div className="space-y-4">
+                          <div className="p-4 rounded-xl border border-cyan-500/20 bg-cyan-950/20 flex flex-wrap items-center justify-between gap-3">
+                            <div className="space-y-1">
+                              <span className="text-[10px] font-mono text-cyan-400 uppercase tracking-wider block">Skor Entropi Shannon (NIST)</span>
+                              <div className="flex items-baseline gap-2">
+                                <span className="text-2xl font-bold font-mono text-white">{resultData.entropyBits} bits</span>
+                                <Badge
+                                  className={cn(
+                                    "text-xs font-mono",
+                                    resultData.strengthTier === "VERY_STRONG" || resultData.strengthTier === "STRONG"
+                                      ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                                      : resultData.strengthTier === "MODERATE"
+                                      ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                                      : "bg-red-500/20 text-red-300 border-red-500/40"
+                                  )}
+                                >
+                                  {resultData.strengthTier} ({resultData.score}/100)
+                                </Badge>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <h5 className="text-xs font-semibold text-slate-300">Estimasi Waktu Retak Serangan Brute-Force:</h5>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                              <div className="p-3 rounded-xl border border-slate-800 bg-slate-900/60 space-y-1">
+                                <span className="text-[10px] text-slate-400 block">Form Online (10 req/s):</span>
+                                <span className="text-xs font-bold text-cyan-300">{resultData.crackTimeEstimates.onlineThrottled}</span>
+                              </div>
+                              <div className="p-3 rounded-xl border border-slate-800 bg-slate-900/60 space-y-1">
+                                <span className="text-[10px] text-slate-400 block">CPU Single-Core (10M/s):</span>
+                                <span className="text-xs font-bold text-amber-300">{resultData.crackTimeEstimates.singleCpu}</span>
+                              </div>
+                              <div className="p-3 rounded-xl border border-slate-800 bg-slate-900/60 space-y-1">
+                                <span className="text-[10px] text-slate-400 block">Klaster GPU (8x RTX 4090):</span>
+                                <span className="text-xs font-bold text-rose-400">{resultData.crackTimeEstimates.gpuClusterRtx4090}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="p-3.5 rounded-xl border border-slate-800 bg-slate-900/60 space-y-2 text-xs">
+                            <span className="text-[10px] font-mono text-slate-400 block">Rekomendasi Hardening:</span>
+                            <p className="text-slate-300 leading-relaxed">{resultData.recommendation}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 8. Certificate Transparency (CT) Logs Explorer Display */}
+                      {resultData.discoveredSubdomains && tool.id === "ct-logs" && (
+                        <div className="space-y-4">
+                          <div className="flex flex-wrap items-center justify-between gap-2 p-3.5 rounded-xl border border-cyan-500/20 bg-cyan-950/20">
+                            <div>
+                              <span className="text-[10px] font-mono text-cyan-400 block">Log Certificate Transparency (crt.sh)</span>
+                              <div className="flex items-center gap-2 mt-1">
+                                <Badge className="bg-cyan-500/20 text-cyan-300 border-cyan-500/30 text-xs">
+                                  {resultData.totalUniqueSubdomains} Subdomain Unik Ditemukan
+                                </Badge>
+                                <Badge variant="outline" className="border-slate-700 text-slate-400 text-xs">
+                                  {resultData.totalCertificatesFound} Total Entri Sertifikat
+                                </Badge>
+                              </div>
+                            </div>
+
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                navigator.clipboard.writeText(resultData.discoveredSubdomains.join("\n"));
+                                success("Seluruh daftar subdomain berhasil disalin!", "Disalin");
+                              }}
+                              className="gap-1.5 text-xs text-slate-300"
+                            >
+                              <Copy className="h-3.5 w-3.5" />
+                              <span>Salin Semua Subdomain</span>
+                            </Button>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <h5 className="text-xs font-semibold text-slate-300">Daftar Subdomain Terkuak:</h5>
+                            <div className="max-h-60 overflow-auto rounded-xl border border-slate-800 bg-slate-950 p-3 grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs font-mono">
+                              {resultData.discoveredSubdomains.map((sub: string, idx: number) => (
+                                <div key={idx} className="p-1.5 px-2 rounded bg-slate-900/60 text-slate-300 truncate hover:text-white">
+                                  {sub}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 9. Email Breach & Compromise Auditor Display */}
+                      {resultData.breaches !== undefined && tool.id === "email-breach-checker" && (
+                        <div className="space-y-4">
+                          <div
+                            className={cn(
+                              "p-4 rounded-xl border space-y-2",
+                              resultData.hasBreachIncident
+                                ? "border-red-500/40 bg-red-950/20 text-red-200"
+                                : "border-emerald-500/40 bg-emerald-950/20 text-emerald-200"
+                            )}
+                          >
+                            <div className="flex items-center gap-2">
+                              {resultData.hasBreachIncident ? (
+                                <ShieldAlert className="h-5 w-5 text-red-400 shrink-0" />
+                              ) : (
+                                <ShieldCheck className="h-5 w-5 text-emerald-400 shrink-0" />
+                              )}
+                              <h4 className="text-sm font-bold">
+                                {resultData.hasBreachIncident
+                                  ? `PERINGATAN: Terdeteksi dalam ${resultData.totalBreachesFound} Insiden Kebocoran Data Publik`
+                                  : "TIDAK DITEMUKAN INSIDEN KEBOCORAN PUBLIK"}
+                              </h4>
+                            </div>
+                            <p className="text-xs opacity-90 leading-relaxed">
+                              {resultData.hasBreachIncident
+                                ? `Target "${resultData.query}" terasosiasi dengan catatan kebocoran data historis. Kredensial akun berisiko telah terekspos.`
+                                : `Target "${resultData.query}" tidak teridentifikasi dalam basis data kebocoran publik terindeks.`}
+                            </p>
+                          </div>
+
+                          {resultData.breaches.length > 0 && (
+                            <div className="space-y-2.5">
+                              <h5 className="text-xs font-semibold text-slate-300">Rincian Insiden Kebocoran Terkait:</h5>
+                              {resultData.breaches.map((b: any, idx: number) => (
+                                <div key={idx} className="p-3.5 rounded-xl border border-slate-800 bg-slate-900/80 space-y-2">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <h6 className="text-xs font-bold text-white">{b.title}</h6>
+                                    <Badge className="bg-red-500/20 text-red-300 border-red-500/40 text-[10px] font-mono">
+                                      {b.severity}
+                                    </Badge>
+                                  </div>
+                                  <span className="text-[11px] text-slate-400 block">
+                                    Tanggal Insiden: {b.breachDate} • Akun Terdampak: ~{Number(b.compromisedAccounts).toLocaleString("id-ID")}
+                                  </span>
+                                  <div className="flex flex-wrap gap-1.5 pt-1">
+                                    {b.dataExposed.map((d: string, dIdx: number) => (
+                                      <Badge key={dIdx} variant="outline" className="text-[10px] border-slate-700 text-slate-300">
+                                        {d}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          <div className="p-3.5 rounded-xl border border-slate-800 bg-slate-900/60 space-y-2">
+                            <span className="text-[10px] font-mono text-cyan-400 block">Rekomendasi Tindakan Remediasi:</span>
+                            <ul className="space-y-1.5 text-xs text-slate-300">
+                              {resultData.remediationTips.map((tip: string, idx: number) => (
+                                <li key={idx} className="flex items-start gap-2">
+                                  <span className="text-cyan-400 font-bold">•</span>
+                                  <span>{tip}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      )}
+
                       {/* General fallback JSON inspection */}
                       {!resultData.records &&
                         !resultData.indicators &&
@@ -4224,6 +4843,14 @@ export default function ToolDetailPage({ params }: ToolPageProps) {
                         !resultData.action &&
                         !resultData.browser &&
                         !resultData.detectedEncoding &&
+                        !resultData.hops &&
+                        resultData.isDisposable === undefined &&
+                        !resultData.complianceStatus &&
+                        !resultData.ports &&
+                        !resultData.networkAddress &&
+                        resultData.entropyBits === undefined &&
+                        !resultData.discoveredSubdomains &&
+                        resultData.breaches === undefined &&
                         !(resultData.ip && resultData.asn) && (
                           <pre className="max-h-96 overflow-auto rounded-lg border border-slate-800 bg-slate-950 p-4 font-mono text-xs text-slate-200 leading-relaxed">
                             {JSON.stringify(resultData, null, 2)}

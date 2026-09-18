@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateRequest } from "@/lib/auth/session";
-import { memoryDb } from "@/lib/db";
+import { memoryDb, persistUserToDb, deleteUserFromDb } from "@/lib/db";
 import { hashPassword } from "@/lib/auth/jwt";
 
 export async function GET(req: NextRequest) {
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
       createdAt: new Date(),
     };
 
-    memoryDb.users.set(email, newUser);
+    await persistUserToDb(newUser);
 
     memoryDb.auditLogs.unshift({
       id: "aud-" + Date.now(),
@@ -124,6 +124,7 @@ export async function PATCH(req: NextRequest) {
       }
       targetUser.status = status;
     }
+    await persistUserToDb(targetUser);
 
     memoryDb.auditLogs.unshift({
       id: "aud-" + Date.now(),
@@ -194,7 +195,7 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    memoryDb.users.delete(foundEmail);
+    await deleteUserFromDb(foundEmail);
 
     memoryDb.auditLogs.unshift({
       id: "aud-" + Date.now(),

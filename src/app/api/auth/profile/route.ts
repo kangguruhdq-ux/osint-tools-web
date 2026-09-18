@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateRequest } from "@/lib/auth/session";
-import { memoryDb } from "@/lib/db";
+import { memoryDb, persistUserToDb } from "@/lib/db";
 import { hashPassword, comparePassword } from "@/lib/auth/jwt";
 
 export async function GET(req: NextRequest) {
@@ -99,8 +99,8 @@ export async function PUT(req: NextRequest) {
       createdAt: new Date(),
     });
 
-    // CRITICAL: Persist changes to disk
-    memoryDb.save();
+    // CRITICAL: Persist changes to disk & Neon PostgreSQL
+    await persistUserToDb(user);
 
     return NextResponse.json({
       success: true,

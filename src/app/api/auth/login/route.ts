@@ -26,7 +26,19 @@ export async function POST(req: NextRequest) {
 
     let user: any = memoryDb.users.get(email);
     if (!user) {
-      user = await safeDbQuery((p) => p.user.findUnique({ where: { email } }));
+      const dbUser = await safeDbQuery((p) => p.user.findUnique({ where: { email } }));
+      if (dbUser) {
+        user = {
+          id: dbUser.id,
+          email: dbUser.email,
+          name: dbUser.name,
+          passwordHash: dbUser.passwordHash,
+          role: dbUser.role,
+          avatar: dbUser.avatarUrl || undefined,
+          createdAt: dbUser.createdAt,
+        };
+        memoryDb.users.set(email, user);
+      }
     }
 
     if (!user) {

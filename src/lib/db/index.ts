@@ -139,6 +139,29 @@ class MemoryStore {
       this.initDefaultSeed();
       this.saveToDisk();
     }
+
+    // Trigger cloud database sync if PostgreSQL is online
+    this.syncFromPostgres().catch(() => {});
+  }
+
+  async syncFromPostgres() {
+    try {
+      const dbUsers = await safeDbQuery((p) => p.user.findMany());
+      if (dbUsers && dbUsers.length > 0) {
+        for (const u of dbUsers) {
+          this._users.set(u.email, {
+            id: u.id,
+            email: u.email,
+            name: u.name,
+            passwordHash: u.passwordHash,
+            role: u.role as any,
+            avatar: u.avatarUrl || undefined,
+            createdAt: u.createdAt,
+          });
+        }
+        this.saveToDisk();
+      }
+    } catch {}
   }
 
   private syncFromDisk() {
@@ -478,3 +501,44 @@ export const memoryDb: MemoryStore =
 if (process.env.NODE_ENV !== "production") {
   global.globalMemoryDb = memoryDb;
 }
+
+export async function persistUserToDb(user: MockUser): Promise<void> {
+  try {
+    memoryDb.users.set(user.email, user);
+    memoryDb.save();
+
+    await safeDbQuery((p) =>
+      p.user.upsert({
+        where: { email: user.email },
+        update: {
+          name: user.name,
+          passwordHash: user.passwordHash,
+          role: user.role as any,
+          avatarUrl: user.avatar || null,
+        },
+        create: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          passwordHash: user.passwordHash,
+          role: user.role as any,
+          avatarUrl: user.avatar || null,
+        },
+      })
+    );
+  } catch {}
+}
+
+export async function deleteUserFromDb(email: string): Promise<void> {
+  try {
+    memoryDb.users.delete(email);
+    memoryDb.save();
+
+    await safeDbQuery((p) =>
+      p.user.delete({
+        where: { email },
+      })
+    );
+  } catch {}
+}
+

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { hashPassword, signToken } from "@/lib/auth/jwt";
 import { SESSION_COOKIE_NAME } from "@/lib/auth/session";
-import { memoryDb, prisma, safeDbQuery } from "@/lib/db";
+import { memoryDb, persistUserToDb, prisma, safeDbQuery } from "@/lib/db";
 
 const RegisterSchema = z.object({
   name: z.string().min(2, "Nama minimal 2 karakter."),
@@ -48,21 +48,7 @@ export async function POST(req: NextRequest) {
       createdAt: new Date(),
     };
 
-    memoryDb.users.set(email, newUser);
-    memoryDb.save();
-
-    // Non-blocking sync to persistent DB if available
-    safeDbQuery((p) =>
-      p.user.create({
-        data: {
-          id: userId,
-          name,
-          email,
-          passwordHash,
-          role: "ANALYST",
-        },
-      })
-    ).catch(() => {});
+    await persistUserToDb(newUser);
 
     const token = signToken({
       userId: newUser.id,
