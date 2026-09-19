@@ -389,7 +389,7 @@ export default function InvestigationDetailPage({ params }: PageProps) {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
                 <label className="font-medium text-slate-300">Kategori</label>
                 <select

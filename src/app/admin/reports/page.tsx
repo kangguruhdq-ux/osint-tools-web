@@ -340,7 +340,7 @@ export default function AdminReportsPage() {
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="space-y-4 text-xs max-h-[60vh] overflow-y-auto pr-2">
+              <div className="space-y-4 text-xs">
                 <div>
                   <h4 className="font-semibold text-white mb-1">Ringkasan Eksekutif</h4>
                   <div className="rounded-lg border border-slate-800 bg-slate-950 p-3 text-slate-300 leading-relaxed">
