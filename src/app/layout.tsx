@@ -17,6 +17,14 @@ export const metadata: Metadata = {
   title: "NEXUS OSINT TOOLS - Legal Intelligence & Media Utilities SaaS",
   description:
     "Platform all-in-one terpercaya untuk OSINT legal, analisis data publik, ekstraksi indikator ancaman (IOC), downloader media berizin, dan utilitas digital enterprise.",
+  icons: {
+    icon: [
+      { url: "/api/brand/icon", type: "image/svg+xml" },
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    apple: "/api/brand/icon",
+    shortcut: "/api/brand/icon",
+  },
 };
 
 export default function RootLayout({

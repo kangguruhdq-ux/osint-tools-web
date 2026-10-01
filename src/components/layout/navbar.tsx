@@ -2,8 +2,9 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { ShieldCheck, Terminal, Menu, X, ChevronRight, Lock } from "lucide-react";
+import { ShieldCheck, Menu, X, ChevronRight, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BrandLogo } from "@/components/brand/brand-logo";
 
 export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -12,22 +13,12 @@ export function Navbar() {
     <header className="sticky top-0 z-40 w-full border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Brand Logo */}
-        <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-tr from-blue-600 to-cyan-500 shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
-            <Terminal className="h-5 w-5 text-white" />
-          </div>
-          <div className="flex flex-col">
-            <span className="font-bold tracking-tight text-white flex items-center gap-1.5 text-base sm:text-lg">
-              NEXUS <span className="text-cyan-400 font-mono text-xs px-1.5 py-0.5 rounded bg-cyan-950/60 border border-cyan-800/50">OSINT</span>
-            </span>
-            <span className="text-[10px] text-slate-400 tracking-wider uppercase font-semibold">Legal Intelligence</span>
-          </div>
-        </Link>
+        <BrandLogo href="/" />
 
         {/* Desktop Nav Links */}
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-300">
           <Link href="/#tools" className="hover:text-cyan-400 transition-colors">
-            60 Tools
+            61 Tools
           </Link>
           <Link href="/#features" className="hover:text-cyan-400 transition-colors">
             Fitur
@@ -77,7 +68,7 @@ export function Navbar() {
               onClick={() => setMobileMenuOpen(false)}
               className="py-2 hover:text-cyan-400"
             >
-              60 Tools
+              61 Tools
             </Link>
             <Link
               href="/#features"

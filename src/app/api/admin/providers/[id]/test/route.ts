@@ -70,6 +70,28 @@ export async function POST(
           { status: 504 }
         );
       }
+    } else if (provider.key === "github-api") {
+      try {
+        const res = await fetch("https://api.github.com/zen", {
+          headers: {
+            Authorization: `Bearer ${rawKey}`,
+            "User-Agent": "NexusOSINT-ProviderTest/1.0",
+          },
+          signal: AbortSignal.timeout(5000),
+        });
+        latencyMs = Date.now() - startTime;
+        if (!res.ok) {
+          return NextResponse.json(
+            { success: false, error: `GitHub API mengembalikan status ${res.status}. Token PAT mungkin salah.` },
+            { status: 400 }
+          );
+        }
+      } catch (e: any) {
+        return NextResponse.json(
+          { success: false, error: `Koneksi ke GitHub API gagal: ${e.message}` },
+          { status: 504 }
+        );
+      }
     } else {
       // Simulate real verification ping
       latencyMs = Date.now() - startTime + 45;

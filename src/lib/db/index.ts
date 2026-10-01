@@ -110,6 +110,7 @@ class MemoryStore {
   private _auditLogs: any[] = [];
   private _keywordMonitors: any[] = [];
   private _reports: any[] = [];
+  private _systemSettings: Map<string, any> = new Map();
 
   public hasSyncedFromDb: boolean = false;
   private syncPromise: Promise<void> | null = null;
@@ -311,6 +312,20 @@ class MemoryStore {
             }));
           }
 
+          // 8. Load System Settings from DB
+          const dbSettings = await p.systemSetting.findMany().catch(() => []);
+          if (dbSettings && dbSettings.length > 0) {
+            for (const s of dbSettings) {
+              this._systemSettings.set(s.key, {
+                id: s.id,
+                key: s.key,
+                value: s.value,
+                description: s.description,
+                updatedAt: s.updatedAt,
+              });
+            }
+          }
+
           this.saveToDisk();
         });
       } catch {
@@ -390,6 +405,14 @@ class MemoryStore {
     this._reports = val;
   }
 
+  get systemSettings(): Map<string, any> {
+    this.syncFromDisk();
+    return this._systemSettings;
+  }
+  set systemSettings(val: Map<string, any>) {
+    this._systemSettings = val;
+  }
+
   loadFromDisk() {
     try {
       if (fs.existsSync(this.dbPath)) {
@@ -438,6 +461,14 @@ class MemoryStore {
             generatedAt: new Date(r.generatedAt),
           }));
         }
+        if (parsed.systemSettings && Array.isArray(parsed.systemSettings)) {
+          for (const [k, v] of parsed.systemSettings) {
+            this._systemSettings.set(k, {
+              ...v,
+              updatedAt: new Date(v.updatedAt || Date.now()),
+            });
+          }
+        }
         try {
           const stat = fs.statSync(this.dbPath);
           this.lastMtime = stat.mtimeMs;
@@ -475,6 +506,7 @@ class MemoryStore {
         auditLogs: this._auditLogs.slice(0, 1000),
         keywordMonitors: this._keywordMonitors,
         reports: this._reports,
+        systemSettings: Array.from(this._systemSettings.entries()),
       };
 
       const payload = JSON.stringify(data, null, 2);
@@ -545,6 +577,16 @@ class MemoryStore {
         if (!knownIds.has(m.id)) {
           this._keywordMonitors.push({ ...m, createdAt: new Date(m.createdAt) });
           knownIds.add(m.id);
+        }
+      }
+    }
+    if (diskParsed.systemSettings && Array.isArray(diskParsed.systemSettings)) {
+      for (const [k, v] of diskParsed.systemSettings) {
+        if (!this._systemSettings.has(k)) {
+          this._systemSettings.set(k, {
+            ...v,
+            updatedAt: new Date(v.updatedAt || Date.now()),
+          });
         }
       }
     }
@@ -645,10 +687,38 @@ class MemoryStore {
         category: "osint",
         status: "ACTIVE",
       },
+      {
+        id: "prov-08",
+        key: "github-api",
+        name: "GitHub REST API v3 (Threat Intel & Token Vault)",
+        category: "osint",
+        baseUrl: "https://api.github.com",
+        status: "ACTIVE",
+        keyHint: "Token Opsional (5000 req/jam)",
+      },
     ];
 
     for (const p of defaultProviders) {
       this.providers.set(p.key, p);
+    }
+
+    const defaultSettings = [
+      { key: "brand_icon", value: "termux-classic", description: "Default web brand icon (termux-classic)" },
+      { key: "brand_name", value: "NEXUS", description: "Web brand name" },
+      { key: "brand_badge", value: "OSINT", description: "Web brand badge" },
+      { key: "tool_github_repo_audit_enabled", value: "true", description: "Status tool GitHub Repo Security Checker" },
+      { key: "github_pat_token", value: "", description: "Optional GitHub Personal Access Token" },
+    ];
+    for (const s of defaultSettings) {
+      if (!this._systemSettings.has(s.key)) {
+        this._systemSettings.set(s.key, {
+          id: "set-" + s.key,
+          key: s.key,
+          value: s.value,
+          description: s.description,
+          updatedAt: new Date(),
+        });
+      }
     }
   }
 }
@@ -999,6 +1069,45 @@ export async function cleanReportsInDb(cutoffDate: number): Promise<void> {
       })
     );
   } catch {}
+}
+
+export async function getSystemSetting(key: string, defaultValue: string = ""): Promise<string> {
+  await ensureDbSynced();
+  const setting = memoryDb.systemSettings.get(key);
+  if (setting && setting.value !== undefined) {
+    return setting.value;
+  }
+  return defaultValue;
+}
+
+export async function setSystemSetting(key: string, value: string, description?: string): Promise<void> {
+  const existing = memoryDb.systemSettings.get(key);
+  const updated = {
+    id: existing?.id || "set-" + Date.now(),
+    key,
+    value,
+    description: description || existing?.description || null,
+    updatedAt: new Date(),
+  };
+  memoryDb.systemSettings.set(key, updated);
+  memoryDb.save();
+
+  await safeDbQuery(async (p) => {
+    await p.systemSetting.upsert({
+      where: { key },
+      update: { value, description: description || undefined },
+      create: { key, value, description: description || undefined },
+    }).catch(() => {});
+  });
+}
+
+export async function getAllSystemSettings(): Promise<Record<string, string>> {
+  await ensureDbSynced();
+  const result: Record<string, string> = {};
+  for (const [key, s] of memoryDb.systemSettings.entries()) {
+    result[key] = s.value;
+  }
+  return result;
 }
 
 

@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
+import { BrandLogo } from "@/components/brand/brand-logo";
 
 interface AuthCardProps {
   initialMode?: "login" | "register";
@@ -185,17 +186,7 @@ export function AuthCard({ initialMode = "login" }: AuthCardProps) {
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
         className="mb-6 flex flex-col items-center gap-2 z-10 text-center"
       >
-        <Link href="/" className="group flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 via-cyan-500 to-indigo-600 shadow-lg shadow-cyan-500/25 group-hover:scale-105 transition-transform duration-300">
-            <Terminal className="h-6 w-6 text-white animate-pulse" />
-          </div>
-          <span className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-            NEXUS{" "}
-            <span className="text-cyan-400 font-mono text-xs font-semibold px-2.5 py-0.5 rounded-full bg-cyan-950/90 border border-cyan-800/80 shadow-sm shadow-cyan-900/50">
-              OSINT
-            </span>
-          </span>
-        </Link>
+        <BrandLogo size="lg" href="/" />
         <p className="text-xs text-slate-400 font-medium max-w-xs sm:max-w-md">
           Enterprise Security & Open Source Intelligence Platform
         </p>
@@ -265,8 +256,8 @@ export function AuthCard({ initialMode = "login" }: AuthCardProps) {
               </CardTitle>
               <CardDescription className="text-xs text-slate-400">
                 {mode === "login"
-                  ? "Akses dashboard intelijen publik dan 60 utilitas digital legal."
-                  : "Dapatkan akses gratis tanpa batas ke seluruh 60 tools dan workspace."}
+                  ? "Akses dashboard intelijen publik dan 61 utilitas digital legal."
+                  : "Dapatkan akses gratis tanpa batas ke seluruh 61 tools dan workspace."}
               </CardDescription>
             </CardHeader>
 

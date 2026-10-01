@@ -12,7 +12,6 @@ import {
   ShieldAlert,
   Settings,
   X,
-  Terminal,
   Globe,
   Download,
   Brain,
@@ -24,6 +23,7 @@ import {
   ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BrandLogo } from "@/components/brand/brand-logo";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -37,7 +37,7 @@ export function Sidebar({ isOpen, onClose, userRole = "USER" }: SidebarProps) {
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "OSINT Workspace", href: "/workspace", icon: FolderKanban },
-    { name: "Katalog 60 Tools", href: "/tools", icon: Wrench },
+    { name: "Katalog 61 Tools", href: "/tools", icon: Wrench },
     { name: "Laporan Investigasi", href: "/reports", icon: FileText },
     { name: "Keyword & RSS Monitor", href: "/monitors", icon: Radio },
   ];
@@ -76,17 +76,7 @@ export function Sidebar({ isOpen, onClose, userRole = "USER" }: SidebarProps) {
       >
         {/* Brand Header */}
         <div className="flex h-16 items-center justify-between border-b border-slate-800/80 px-4">
-          <Link href="/dashboard" className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-tr from-blue-600 to-cyan-500 shadow-md shadow-blue-500/20">
-              <Terminal className="h-5 w-5 text-white" />
-            </div>
-            <div className="flex flex-col">
-              <span className="font-bold tracking-tight text-white flex items-center gap-1.5 text-base">
-                NEXUS <span className="text-cyan-400 font-mono text-xs px-1 py-0.5 rounded bg-cyan-950/60 border border-cyan-800/50">OSINT</span>
-              </span>
-              <span className="text-[9px] text-slate-400 tracking-wider uppercase font-semibold">Enterprise SaaS</span>
-            </div>
-          </Link>
+          <BrandLogo href="/dashboard" />
           <button
             onClick={onClose}
             className="p-1.5 text-slate-400 hover:text-white lg:hidden"
@@ -195,7 +185,7 @@ export function Sidebar({ isOpen, onClose, userRole = "USER" }: SidebarProps) {
               <span>Akses Komunitas Gratis</span>
             </div>
             <p className="text-[11px] text-slate-400 leading-relaxed">
-              Seluruh 60 tools aktif bebas tanpa batasan kuota berbayar.
+              Seluruh 61 tools aktif bebas tanpa batasan kuota berbayar.
             </p>
             <div className="mt-2 flex items-center gap-1.5 text-[10px] text-emerald-300 font-mono">
               <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />

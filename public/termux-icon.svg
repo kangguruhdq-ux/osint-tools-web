@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none">
+  <rect width="64" height="64" rx="14" fill="#000000"/>
+  <rect x="1.5" y="1.5" width="61" height="61" rx="12.5" stroke="#334155" stroke-width="1.5"/>
+  <!-- Termux '>' Prompt -->
+  <path d="M18 20L32 32L18 44" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Termux '_' Cursor -->
+  <path d="M36 44H48" stroke="#00E5FF" stroke-width="6" stroke-linecap="round"/>
+</svg>

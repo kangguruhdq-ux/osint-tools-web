@@ -253,6 +253,8 @@ export default function ToolDetailPage({ params }: ToolPageProps) {
           payload = { domain: trimmedInput };
         } else if (tool.id === "email-breach-checker") {
           payload = { target: trimmedInput };
+        } else if (tool.id === "github-repo-audit") {
+          payload = { repo: trimmedInput };
         } else if (tool.id === "report-generator") {
           const targetVal = trimmedInput || "Target Investigasi Publik";
           const cleanTarget = targetVal.replace(/^https?:\/\//i, "").replace(/\/$/, "");
@@ -888,6 +890,8 @@ export default function ToolDetailPage({ params }: ToolPageProps) {
                             ? "target.com (mencari sertifikat & subdomain)"
                             : tool.id === "email-breach-checker"
                             ? "analis@perusahaan.id atau domain.com"
+                            : tool.id === "github-repo-audit"
+                            ? "owner/repo atau https://github.com/owner/repo"
                             : tool.id === "username-checker"
                             ? "torvalds"
                             : tool.id.includes("email")
@@ -4797,6 +4801,312 @@ export default function ToolDetailPage({ params }: ToolPageProps) {
                               ))}
                             </ul>
                           </div>
+                        </div>
+                      )}
+
+                      {/* 10. GitHub Repo Security & Malware Auditor Display */}
+                      {resultData.threatFindings !== undefined && tool.id === "github-repo-audit" && (
+                        <div className="space-y-5">
+                          {/* Threat Verdict & Trust Score Banner */}
+                          <div
+                            className={cn(
+                              "p-4 sm:p-5 rounded-2xl border backdrop-blur-md space-y-3",
+                              resultData.status === "AMAN"
+                                ? "border-emerald-500/40 bg-emerald-950/20 text-emerald-100"
+                                : resultData.status === "WASPADA"
+                                ? "border-amber-500/40 bg-amber-950/20 text-amber-100"
+                                : "border-red-500/50 bg-red-950/30 text-red-100 shadow-xl shadow-red-950/30"
+                            )}
+                          >
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className={cn(
+                                    "p-2.5 rounded-xl border shrink-0",
+                                    resultData.status === "AMAN"
+                                      ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400"
+                                      : resultData.status === "WASPADA"
+                                      ? "bg-amber-500/20 border-amber-500/40 text-amber-400"
+                                      : "bg-red-500/20 border-red-500/40 text-red-400"
+                                  )}
+                                >
+                                  {resultData.status === "AMAN" ? (
+                                    <ShieldCheck className="h-6 w-6" />
+                                  ) : resultData.status === "WASPADA" ? (
+                                    <AlertTriangle className="h-6 w-6" />
+                                  ) : (
+                                    <ShieldAlert className="h-6 w-6 animate-pulse" />
+                                  )}
+                                </div>
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[10px] font-mono uppercase tracking-widest opacity-80">
+                                      Hasil Audit Repositori
+                                    </span>
+                                    <Badge
+                                      className={cn(
+                                        "text-[10px] font-bold font-mono px-2 py-0.5",
+                                        resultData.status === "AMAN"
+                                          ? "bg-emerald-500/30 text-emerald-300 border-emerald-500/50"
+                                          : resultData.status === "WASPADA"
+                                          ? "bg-amber-500/30 text-amber-300 border-amber-500/50"
+                                          : "bg-red-500/30 text-red-200 border-red-500/60"
+                                      )}
+                                    >
+                                      STATUS: {resultData.status}
+                                    </Badge>
+                                  </div>
+                                  <h3 className="text-base sm:text-lg font-bold text-white mt-0.5">
+                                    {resultData.status === "AMAN"
+                                      ? "Repositori Bersih & Aman Digunakan"
+                                      : resultData.status === "WASPADA"
+                                      ? "Perhatian: Terdeteksi Anomali / File Biner"
+                                      : "PERINGATAN BAHAYA: Terdeteksi Pola Malware / Stealer"}
+                                  </h3>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-2 self-start sm:self-auto bg-slate-950/60 px-3.5 py-2 rounded-xl border border-slate-800">
+                                <div className="text-right">
+                                  <span className="text-[9px] text-slate-400 block font-mono uppercase">
+                                    Trust Score
+                                  </span>
+                                  <span
+                                    className={cn(
+                                      "text-xl font-black font-mono leading-none",
+                                      resultData.score >= 85
+                                        ? "text-emerald-400"
+                                        : resultData.score >= 50
+                                        ? "text-amber-400"
+                                        : "text-red-400"
+                                    )}
+                                  >
+                                    {resultData.score}/100
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <p className="text-xs opacity-90 leading-relaxed pt-1">
+                              {resultData.summary}
+                            </p>
+                          </div>
+
+                          {/* Repository Intelligence Metadata Card */}
+                          {resultData.repo && (
+                            <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 space-y-3">
+                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
+                                <div className="flex items-center gap-2.5">
+                                  {resultData.repo.ownerAvatar && (
+                                    <img
+                                      src={resultData.repo.ownerAvatar}
+                                      alt={resultData.repo.owner}
+                                      className="h-7 w-7 rounded-full border border-slate-700"
+                                    />
+                                  )}
+                                  <div>
+                                    <h4 className="text-sm font-bold text-white font-mono flex items-center gap-2">
+                                      <span>{resultData.repo.fullName}</span>
+                                      {resultData.repo.isFork && (
+                                        <Badge variant="outline" className="text-[9px] border-slate-700 text-slate-400">
+                                          Forked
+                                        </Badge>
+                                      )}
+                                      {resultData.repo.isArchived && (
+                                        <Badge variant="outline" className="text-[9px] border-amber-800 text-amber-400">
+                                          Archived
+                                        </Badge>
+                                      )}
+                                    </h4>
+                                    <p className="text-xs text-slate-400 line-clamp-1 mt-0.5">
+                                      {resultData.repo.description}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {resultData.repo.htmlUrl && (
+                                  <a
+                                    href={resultData.repo.htmlUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="inline-flex items-center gap-1.5 text-xs text-cyan-400 hover:text-cyan-300 transition-colors self-start sm:self-auto"
+                                  >
+                                    <span>Buka di GitHub</span>
+                                    <ExternalLink className="h-3 w-3" />
+                                  </a>
+                                )}
+                              </div>
+
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1 text-xs">
+                                <div className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800">
+                                  <span className="text-[10px] text-slate-400 block">Stars / Bintang</span>
+                                  <span className="font-mono font-bold text-white flex items-center gap-1 mt-0.5">
+                                    <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
+                                    {Number(resultData.repo.stars).toLocaleString("id-ID")}
+                                  </span>
+                                </div>
+                                <div className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800">
+                                  <span className="text-[10px] text-slate-400 block">Forks</span>
+                                  <span className="font-mono font-bold text-white flex items-center gap-1 mt-0.5">
+                                    <GitFork className="h-3 w-3 text-slate-400" />
+                                    {Number(resultData.repo.forks).toLocaleString("id-ID")}
+                                  </span>
+                                </div>
+                                <div className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800">
+                                  <span className="text-[10px] text-slate-400 block">Open Issues</span>
+                                  <span className="font-mono font-bold text-white mt-0.5 block">
+                                    {resultData.repo.openIssues} Issue
+                                  </span>
+                                </div>
+                                <div className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800">
+                                  <span className="text-[10px] text-slate-400 block">Lisensi</span>
+                                  <span className="font-mono font-bold text-slate-300 mt-0.5 block truncate">
+                                    {resultData.repo.license}
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div className="flex flex-wrap items-center gap-3 pt-1 text-[11px] text-slate-400 font-mono">
+                                <span>Dibuat: {resultData.repo.createdAt}</span>
+                                <span>•</span>
+                                <span>Update Terakhir: {resultData.repo.updatedAt}</span>
+                                <span>•</span>
+                                <span>Branch Utama: {resultData.repo.defaultBranch}</span>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Threat Findings List */}
+                          <div className="space-y-2.5">
+                            <div className="flex items-center justify-between">
+                              <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                                Temuan Audit Keamanan ({resultData.threatFindings?.length || 0}):
+                              </h4>
+                            </div>
+
+                            {(!resultData.threatFindings || resultData.threatFindings.length === 0) ? (
+                              <div className="p-4 rounded-xl border border-emerald-500/20 bg-emerald-950/20 text-xs text-emerald-300 flex items-center gap-2.5">
+                                <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                                <span>Semua pemeriksaan heuristik keamanan lolos tanpa ada indikator bahaya terdeteksi.</span>
+                              </div>
+                            ) : (
+                              <div className="space-y-2">
+                                {resultData.threatFindings.map((f: any, idx: number) => (
+                                  <div
+                                    key={idx}
+                                    className="p-3.5 rounded-xl border border-slate-800 bg-slate-900/80 space-y-1.5"
+                                  >
+                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                      <div className="flex items-center gap-2">
+                                        <Badge
+                                          className={cn(
+                                            "text-[10px] font-mono",
+                                            f.severity === "CRITICAL"
+                                              ? "bg-red-500/20 text-red-300 border-red-500/40"
+                                              : f.severity === "HIGH"
+                                              ? "bg-rose-500/20 text-rose-300 border-rose-500/40"
+                                              : f.severity === "MEDIUM"
+                                              ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                                              : "bg-blue-500/20 text-blue-300 border-blue-500/40"
+                                          )}
+                                        >
+                                          {f.severity}
+                                        </Badge>
+                                        <span className="text-xs font-bold text-white">{f.title}</span>
+                                      </div>
+                                      <span className="text-[10px] font-mono text-slate-400">{f.category}</span>
+                                    </div>
+                                    <p className="text-xs text-slate-300 leading-relaxed">{f.detail}</p>
+                                    {f.filePath && (
+                                      <div className="pt-1">
+                                        <span className="text-[11px] font-mono text-cyan-400 bg-cyan-950/60 border border-cyan-800/40 px-2 py-0.5 rounded">
+                                          File: {f.filePath}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Suspicious Files Detected */}
+                          {resultData.suspiciousFiles && resultData.suspiciousFiles.length > 0 && (
+                            <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 space-y-2">
+                              <h4 className="text-xs font-semibold text-rose-400 flex items-center gap-1.5">
+                                <AlertTriangle className="h-3.5 w-3.5" />
+                                <span>File Biner & Script Berisiko Terdeteksi ({resultData.suspiciousFiles.length}):</span>
+                              </h4>
+                              <div className="max-h-48 overflow-auto space-y-1.5">
+                                {resultData.suspiciousFiles.map((sf: any, idx: number) => (
+                                  <div
+                                    key={idx}
+                                    className="p-2 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-between text-xs font-mono"
+                                  >
+                                    <span className="text-slate-300 truncate max-w-sm">{sf.path}</span>
+                                    <div className="flex items-center gap-1.5 shrink-0">
+                                      <Badge variant="outline" className="text-[10px] border-red-800 text-red-300">
+                                        {sf.type}
+                                      </Badge>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Exfiltration & Code Indicators */}
+                          {resultData.codeIndicators && resultData.codeIndicators.length > 0 && (
+                            <div className="rounded-xl border border-red-500/30 bg-red-950/20 p-4 space-y-2">
+                              <h4 className="text-xs font-semibold text-red-300 flex items-center gap-1.5">
+                                <ShieldAlert className="h-3.5 w-3.5 text-red-400" />
+                                <span>Signature Malware & Exfiltration Aktif Terkonfirmasi:</span>
+                              </h4>
+                              <div className="space-y-1.5">
+                                {resultData.codeIndicators.map((ci: any, idx: number) => (
+                                  <div
+                                    key={idx}
+                                    className="p-2.5 rounded-lg bg-slate-950/90 border border-red-900/40 text-xs font-mono space-y-1"
+                                  >
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-red-400 font-bold">{ci.rule}</span>
+                                      <span className="text-slate-400 text-[10px]">{ci.file}</span>
+                                    </div>
+                                    <div className="text-slate-300 text-[11px] truncate">
+                                      Pattern: <span className="text-cyan-300">{ci.pattern}</span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Recommendations */}
+                          {resultData.recommendations && resultData.recommendations.length > 0 && (
+                            <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/60 space-y-2 text-xs">
+                              <span className="text-[10px] font-mono text-cyan-400 block uppercase">
+                                Panduan Keamanan & Rekomendasi Tindakan:
+                              </span>
+                              <ul className="space-y-1.5 text-slate-300">
+                                {resultData.recommendations.map((rec: string, idx: number) => (
+                                  <li key={idx} className="flex items-start gap-2">
+                                    <span className="text-cyan-400 font-bold">•</span>
+                                    <span>{rec}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          {/* Scan Metadata */}
+                          {resultData.scanStats && (
+                            <div className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-xl border border-slate-800 bg-slate-950/40 text-[11px] font-mono text-slate-400">
+                              <span>Total File Dipindai: {resultData.scanStats.totalFilesScanned}</span>
+                              <span>Rilis Diperiksa: {resultData.scanStats.releasesChecked}</span>
+                              <span>Sisa Kuota GitHub API: {resultData.scanStats.rateLimitRemaining}/jam</span>
+                              <span>Waktu Eksekusi: {resultData.scanStats.executionTimeMs} ms</span>
+                            </div>
+                          )}
                         </div>
                       )}
 

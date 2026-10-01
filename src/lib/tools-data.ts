@@ -420,7 +420,7 @@ export const TOOLS_CATALOG: ToolDefinition[] = [
     badge: "CLONER LIVE",
     requiredProviderName: "DOM Asset Resolver Engine",
   },
-  // 38-60 Real High-Impact OSINT & Converter Tools
+  // 38-61 Real High-Impact OSINT & Converter Tools
   {
     id: "subdomain-finder",
     name: "Subdomain Finder via CT Logs",
@@ -673,5 +673,16 @@ export const TOOLS_CATALOG: ToolDefinition[] = [
     iconName: "UserX",
     requiresKey: false,
     badge: "BREACH AUDIT",
+  },
+  {
+    id: "github-repo-audit",
+    name: "GitHub Repo Security & Malware Auditor",
+    category: "osint",
+    categoryLabel: "Repo & Code Security",
+    description: "Audit keamanan repositori GitHub publik: deteksi bahaya malware, webhook grabber, token stealer, fake star anomaly, dan biner trojan vs aman.",
+    endpoint: "/api/osint/github-repo-audit",
+    iconName: "ShieldAlert",
+    requiresKey: false,
+    badge: "THREAT AUDIT",
   },
 ];

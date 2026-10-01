@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
-import { Terminal, Shield, Lock, ExternalLink } from "lucide-react";
+import { Shield, Lock, ExternalLink } from "lucide-react";
+import { BrandLogo } from "@/components/brand/brand-logo";
 
 export function Footer() {
   return (
@@ -9,14 +10,7 @@ export function Footer() {
         <div className="grid grid-cols-1 gap-8 md:grid-cols-4 lg:grid-cols-5">
           {/* Brand Col */}
           <div className="md:col-span-2 space-y-4">
-            <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white shadow-md">
-                <Terminal className="h-4 w-4" />
-              </div>
-              <span className="text-lg font-bold text-white tracking-tight">
-                NEXUS <span className="text-cyan-400">OSINT</span>
-              </span>
-            </div>
+            <BrandLogo />
             <p className="text-sm text-slate-400 max-w-sm leading-relaxed">
               Platform all-in-one terintegrasi untuk intelijen sumber terbuka (OSINT) legal, analisis data publik, pemantauan media, dan digital utilities untuk para investigator, analis keamanan, dan profesional.
             </p>
@@ -52,7 +46,7 @@ export function Footer() {
               </li>
               <li>
                 <Link href="/tools" className="hover:text-cyan-400 transition-colors font-medium text-blue-400">
-                  Semua 60 Tools →
+                  Semua 61 Tools →
                 </Link>
               </li>
             </ul>
